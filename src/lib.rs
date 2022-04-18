@@ -106,6 +106,10 @@ impl DnPe<'_>{
             stream_entry_rva+= &(stream.stream_table_entry_size as u32);
             res.insert(stream.name().to_string(), stream);
         }
+        let mut rres = std::collections::HashMap::new();
+        for (n, s) in &res{
+            rres.insert(n.to_string(), self.parse_clr_stream(s, &res)?);
+        }
         Ok(res)
     }
 

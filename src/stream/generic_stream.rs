@@ -1,6 +1,6 @@
 use crate::Result;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GenericStream{
     data: Vec<u8>
 }
