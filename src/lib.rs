@@ -70,6 +70,10 @@ impl DnPe<'_>{
         Ok(self.data[offset .. offset+size].to_vec())
     }
 
+    fn get_dword_at_rva(&self, rva: &u32) -> Result<u32>{
+        self.get_data(rva, &4)
+    }
+
     fn new_clrdata(&self, clr_struct: ClrStruct) -> Result<ClrData>{
         let metadata_struct: MetaDataStruct = self.get_data(&clr_struct.meta_data_rva, &(clr_struct.meta_data_size as usize))?;
         let metadata = self.new_metadata(&clr_struct.meta_data_rva, metadata_struct)?;

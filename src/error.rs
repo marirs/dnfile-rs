@@ -16,6 +16,8 @@ pub enum Error {
     Utf8Error(#[from] std::string::FromUtf8Error),
     #[error("undefined stream")]
     UndefinedStream,
+    #[error("undefined meta data table index (0..63) {0}")]
+    UndefinedMetaDataTableIndex(u32),
     #[error("not implemented")]
     NoiImplementedError,
 }
