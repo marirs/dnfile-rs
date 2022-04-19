@@ -34,9 +34,9 @@ impl crate::DnPe<'_>{
 
     pub fn parse_meta_data_tables(&self,
                                   s: &mut MetaDataTable,
-                                  stream_map: &std::collections::HashMap<String, super::ClrStream>) -> Result<std::collections::HashMap<u32, mdtables::MetaDataTable>>{
+                                  stream_map: &std::collections::HashMap<String, super::ClrStream>) -> Result<std::collections::HashMap<usize, mdtables::MetaDataTable>>{
        // let header = MDTablesStruct
-        let tables = std::collections::HashMap::new();
+        let mut tables = std::collections::HashMap::new();
         let strings_offset_size = 0;
         let guids_offset_size = 0;
         let blobs_offset_size = 0;
@@ -53,7 +53,7 @@ impl crate::DnPe<'_>{
         let mut table_rowcounts = vec![];
         for i in 0..MAX_TABLES{
             if header.mask_valid & (1<<i) != 0{
-                table_rowcounts.push(self.get_dword_at_rva(&curr_rva)?);
+                table_rowcounts.push(self.get_dword_at_rva(&curr_rva)? as usize);
                 curr_rva += 4;
             } else {
                 table_rowcounts.push(0);
@@ -69,33 +69,30 @@ impl crate::DnPe<'_>{
         for i in 0..MAX_TABLES{
             if header.mask_valid & (1<<i) != 0 {
                 let is_sorted = header.mask_sorted & (1<<i) != 0;
-                let mut table = match self.create_md_table(
+                match self.create_md_table(
                     &i,
                     &table_rowcounts,
-                    &is_sorted,
-                    &strings_offset_size,
-                    &guids_offset_size,
-                    &blobs_offset_size,
-                    strings_heap,
-                    guid_heap,
-                    blob_heap){
-                    Ok(t) => Some(t),
+                    is_sorted,
+                    strings_offset_size,
+                    guids_offset_size,
+                    blobs_offset_size){
+                    Ok(t) => {
+                        tables.insert(i, t);
+                    },
                     Err(e) => {
                         deferred_exceptions.push(e.to_string());
                         continue
                     }
-                };
-                table.number = i;
-                tables.insert(i, table);
+                }
             }
         }
         let mut ttables = std::collections::HashMap::new();
         for (n, table) in &tables{
             if table.row_size > 0 && table.num_rows > 0{
-                let table_data = self.get_data(&curr_rva, table.row_size * table.num_rows)?;
+                let table_data = self.get_vec(&curr_rva, &(table.row_size * table.num_rows))?;
                 let mut ttable = self.parse_rows(table, &curr_rva, table_data)?;
                 ttable.rva = curr_rva;
-                curr_rva += table.row_size * table.num_rows;
+                curr_rva += (table.row_size * table.num_rows) as u32;
                 ttables.insert(*n, ttable);
             } else {
                 ttables.insert(*n, table.clone());
@@ -105,7 +102,7 @@ impl crate::DnPe<'_>{
         for (n, table) in &ttables{
             tttables.insert(*n, self.parse_table(table, &ttables)?);
         }
-        Ok(())
+        Ok(tttables)
     }
 }
 
