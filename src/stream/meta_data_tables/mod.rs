@@ -37,9 +37,6 @@ impl crate::DnPe<'_>{
                                   stream_map: &std::collections::HashMap<String, super::ClrStream>) -> Result<std::collections::HashMap<usize, mdtables::MetaDataTable>>{
        // let header = MDTablesStruct
         let mut tables = std::collections::HashMap::new();
-        let strings_offset_size = 0;
-        let guids_offset_size = 0;
-        let blobs_offset_size = 0;
         let header_len = std::mem::size_of::<MDTablesStruct>();
         let header: MDTablesStruct = self.get_data(&s.rva, &header_len)?;
         let strings_offset_size = if header.heap_offset_sizes & STRINGS_MASK != 0 { 4 } else { 2 };
