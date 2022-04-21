@@ -20,6 +20,8 @@ pub enum Error {
     UndefinedMetaDataTableIndex(u32),
     #[error("undefined meta data table name {0}")]
     UndefinedMetaDataTableName(&'static str),
+    #[error("data not enough {0} required {1}")]
+    NotEnoughData(usize, usize),
     #[error("not implemented")]
     NoiImplementedError,
 }

@@ -87,7 +87,7 @@ impl crate::DnPe<'_>{
         for (n, table) in &tables{
             if table.row_size > 0 && table.num_rows > 0{
                 let table_data = self.get_vec(&curr_rva, &(table.row_size * table.num_rows))?;
-                let mut ttable = self.parse_rows(table, &curr_rva, table_data)?;
+                let mut ttable = self.parse_rows(table, &curr_rva, &table_data)?;
                 ttable.rva = curr_rva;
                 curr_rva += (table.row_size * table.num_rows) as u32;
                 ttables.insert(*n, ttable);

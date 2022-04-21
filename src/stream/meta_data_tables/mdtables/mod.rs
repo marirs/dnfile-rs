@@ -4,8 +4,9 @@ pub mod codedindex;
 pub mod enums;
 
 pub trait MDTableTrait : std::fmt::Debug + MDTableTraitClone{
-    fn set_data(&mut self, data: Vec<u8>) -> Result<()>;
+    fn set_data(&mut self, data: &Vec<u8>) -> Result<()>;
     fn row_size(&self) -> usize;
+    fn get_row(&mut self, i: usize) -> &mut dyn MDTableRowTrait;
 }
 
 pub trait MDTableTraitClone {
@@ -24,7 +25,6 @@ impl Clone for Box<dyn MDTableTrait> {
     }
 }
 
-
 #[derive(Debug, Clone, Default)]
 pub struct MDTable<T>
 where T: MDTableRowTrait + std::fmt::Debug + Default + Clone{
@@ -42,15 +42,24 @@ where T: MDTableRowTrait + std::fmt::Debug + Default + Clone{
             table: vec![MDTableRow::<T>::new(strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts); *num_rows]
         })
     }
-    pub fn row_size(&self) -> usize{
-        unimplemented!()
-    }
 }
 
 impl<T> MDTableTrait for MDTable<T>
 where T: 'static + MDTableRowTrait + std::fmt::Debug + Default + Clone{
-    fn set_data(&mut self, data: Vec<u8>) -> Result<()>{
-        unimplemented!()
+    fn set_data(&mut self, data: &Vec<u8>) -> Result<()>{
+        if data.len() < self.table.len()*self.row_size(){
+            return Err(crate::error::Error::NotEnoughData(data.len(), self.table.len()*self.row_size()));
+        }
+        let mut curr_offset = 0;
+        let row_size = self.row_size();
+        for r in &mut self.table{
+            if data.len() - curr_offset < row_size{
+                return Err(crate::error::Error::NotEnoughData(row_size, data.len() - curr_offset));
+            }
+            r.set_data(&data[curr_offset..curr_offset+row_size].to_vec())?;
+            curr_offset += row_size;
+        }
+        Ok(())
     }
 
     fn row_size(&self) -> usize{
@@ -60,10 +69,13 @@ where T: 'static + MDTableRowTrait + std::fmt::Debug + Default + Clone{
             self.table[0].size()
         }
     }
+
+    fn get_row(&mut self, i: usize) -> &mut dyn MDTableRowTrait{
+        &mut self.table[i]
+    }
 }
 
-
-pub trait MDTableRowTrait : std::fmt::Debug + Default + Clone{
+pub trait MDTableRowTrait{
     fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize;
 }
 
@@ -96,6 +108,11 @@ where T: MDTableRowTrait{
 
     pub fn size(&self) -> usize{
         self.row.size(self.str_offset_size, self.guids_offset_size, self.blobs_offset_size, &self.tables_row_counts)
+    }
+
+    pub fn set_data(&mut self, data: &Vec<u8>) -> Result<()>{
+        self.data = data.clone();
+        Ok(())
     }
 }
 
@@ -795,6 +812,12 @@ pub struct MetaDataTable{
     table: Box<dyn MDTableTrait>
 }
 
+impl MetaDataTable{
+    pub fn set_data(&mut self, data: &Vec<u8>) -> Result<()>{
+        self.table.set_data(data)
+    }
+}
+
 impl crate::DnPe<'_>{
     pub fn create_md_table(&self,
                            i: &usize,
@@ -889,12 +912,22 @@ impl crate::DnPe<'_>{
         }
     }
 
-    pub fn parse_rows(&self, table: &MetaDataTable, rva: &u32, table_data: Vec<u8>) -> Result<MetaDataTable>{
-        unimplemented!()
+    pub fn parse_rows(&self, table: &MetaDataTable, rva: &u32, table_data: &Vec<u8>) -> Result<MetaDataTable>{
+        let mut table = table.clone();
+        table.set_data(table_data);
+        Ok(table)
     }
 
     pub fn parse_table(&self, table: &MetaDataTable, ttables: &std::collections::HashMap<usize, MetaDataTable>) -> Result<MetaDataTable>{
-        unimplemented!()
+        let mut table = table.clone();
+        for i in 0..table.row_count(){
+            let mut next_row = None;
+            if i+1 < table.row_count(){
+                next_row = Some(table.get_row(i+1)?);
+            }
+            table.get_row(i)?.parse(ttables, next_row);
+        }
+        Ok(table)
     }
 }
 
