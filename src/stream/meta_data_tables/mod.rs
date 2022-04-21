@@ -40,8 +40,8 @@ impl crate::DnPe<'_>{
         let header_len = std::mem::size_of::<MDTablesStruct>();
         let header: MDTablesStruct = self.get_data(&s.rva, &header_len)?;
         let strings_offset_size = if header.heap_offset_sizes & STRINGS_MASK != 0 { 4 } else { 2 };
-        let guid_offset_size = if header.heap_offset_sizes & GUIDS_MASK != 0 { 4 } else { 2 };
-        let blob_offset_size = if header.heap_offset_sizes & BLOBS_MASK != 0 { 4 } else { 2 };
+        let guids_offset_size = if header.heap_offset_sizes & GUIDS_MASK != 0 { 4 } else { 2 };
+        let blobs_offset_size = if header.heap_offset_sizes & BLOBS_MASK != 0 { 4 } else { 2 };
         let strings_heap = &stream_map.get("#Strings");
         let guid_heap = &stream_map.get("#GUID");
         let blob_heap = &stream_map.get("#Blob");

@@ -3,122 +3,115 @@ use crate::Result;
 pub mod codedindex;
 pub mod enums;
 
-#[derive(Debug, Clone)]
-pub enum MDTable{
-    Module(Vec<Module>),
-    TypeRef(Vec<TypeRef>),
-    TypeDef(Vec<TypeDef>),
-    FieldPtr(Vec<FieldPtr>),
-    Field(Vec<Field>),
-    MethodPtr(Vec<MethodPtr>),
-    MethodDef(Vec<MethodDef>),
-    ParamPtr(Vec<ParamPtr>),
-    Param(Vec<Param>),
-    InterfaceImpl(Vec<InterfaceImpl>),
-    MemberRef(Vec<MemberRef>),
-    Constant(Vec<Constant>),
-    CustomAttribute(Vec<CustomAttribute>),
-    FieldMarshal(Vec<FieldMarshal>),
-    DeclSecurity(Vec<DeclSecurity>),
-    ClassLayout(Vec<ClassLayout>),
-    FieldLayout(Vec<FieldLayout>),
-    StandAloneSig(Vec<StandAloneSig>),
-    EventMap(Vec<EventMap>),
-    EventPtr(Vec<EventPtr>),
-    Event(Vec<Event>),
-    PropertyMap(Vec<PropertyMap>),
-    PropertyPtr(Vec<PropertyPtr>),
-    Property(Vec<Property>),
-    MethodSemantics(Vec<MethodSemantics>),
-    MethodImpl(Vec<MethodImpl>),
-    ModuleRef(Vec<ModuleRef>),
-    TypeSpec(Vec<TypeSpec>),
-    ImplMap(Vec<ImplMap>),
-    FieldRva(Vec<FieldRva>),
-    EncLog(Vec<EncLog>),
-    EncMap(Vec<EncMap>),
-    Assembly(Vec<Assembly>),
-    AssemblyProcessor(Vec<AssemblyProcessor>),
-    AssemblyOS(Vec<AssemblyOS>),
-    AssemblyRef(Vec<AssemblyRef>),
-    AssemblyRefProcessor(Vec<AssemblyRefProcessor>),
-    AssemblyRefOS(Vec<AssemblyRefOS>),
-    File(Vec<File>),
-    ExportedType(Vec<ExportedType>),
-    ManifestResource(Vec<ManifestResource>),
-    NestedClass(Vec<NestedClass>),
-    GenericParam(Vec<GenericParam>),
-    GenericMethod(Vec<GenericMethod>),
-    GenericParamConstraint(Vec<GenericParamConstraint>),
-    Unused(Vec<Unused>),
-    MaxTable(Vec<MaxTable>)
+pub trait MDTableTrait : std::fmt::Debug + MDTableTraitClone{
+    fn set_data(&mut self, data: Vec<u8>) -> Result<()>;
+    fn row_size(&self) -> usize;
 }
 
-impl MDTable{
-    pub fn row_size(&self,
-                    strings_offset_size: usize,
-                    guids_offset_size: usize,
-                    blobs_offset_size: usize) -> usize{
-        match self{
-            MDTable::Module(_) => 0,
-            MDTable::TypeRef(_) => 0,
-            MDTable::TypeDef(_) => 0,
-            MDTable::FieldPtr(_) => 0,
-            MDTable::Field(_) => 0,
-            MDTable::MethodPtr(_) => 0,
-            MDTable::MethodDef(_) => 0,
-            MDTable::ParamPtr(_) => 0,
-            MDTable::Param(_) => 0,
-            MDTable::InterfaceImpl(_) => 0,
-            MDTable::MemberRef(_) => 0,
-            MDTable::Constant(_) => 0,
-            MDTable::CustomAttribute(_) => 0,
-            MDTable::FieldMarshal(_) => 0,
-            MDTable::DeclSecurity(_) => 0,
-            MDTable::ClassLayout(_) => 0,
-            MDTable::FieldLayout(_) => 0,
-            MDTable::StandAloneSig(_) => 0,
-            MDTable::EventMap(_) => 0,
-            MDTable::EventPtr(_) => 0,
-            MDTable::Event(_) => 0,
-            MDTable::PropertyMap(_) => 0,
-            MDTable::PropertyPtr(_) => 0,
-            MDTable::Property(_) => 0,
-            MDTable::MethodSemantics(_) => 0,
-            MDTable::MethodImpl(_) => 0,
-            MDTable::ModuleRef(_) => 0,
-            MDTable::TypeSpec(_) => 0,
-            MDTable::ImplMap(_) => 0,
-            MDTable::FieldRva(_) => 0,
-            MDTable::EncLog(_) => 0,
-            MDTable::EncMap(_) => 0,
-            MDTable::Assembly(_) => 0,
-            MDTable::AssemblyProcessor(_) => 0,
-            MDTable::AssemblyOS(_) => 0,
-            MDTable::AssemblyRef(_) => 0,
-            MDTable::AssemblyRefProcessor(_) => 0,
-            MDTable::AssemblyRefOS(_) => 0,
-            MDTable::File(_) => 0,
-            MDTable::ExportedType(_) => 0,
-            MDTable::ManifestResource(_) => 0,
-            MDTable::NestedClass(_) => 0,
-            MDTable::GenericParam(_) => 0,
-            MDTable::GenericMethod(_) => 0,
-            MDTable::GenericParamConstraint(_) => 0,
-            MDTable::Unused(_) => 0,
-            MDTable::MaxTable(_) => 0
-        }
+pub trait MDTableTraitClone {
+    fn clone_box(&self) -> Box<dyn MDTableTrait>;
+}
+
+impl<T: 'static + MDTableTrait + Clone> MDTableTraitClone for T {
+    fn clone_box(&self) -> Box<dyn MDTableTrait> {
+        Box::new(self.clone())
+    }
+}
+
+impl Clone for Box<dyn MDTableTrait> {
+    fn clone(&self) -> Box<dyn MDTableTrait> {
+        self.clone_box()
     }
 }
 
 
 #[derive(Debug, Clone, Default)]
+pub struct MDTable<T>
+where T: MDTableRowTrait + std::fmt::Debug + Default + Clone{
+    table: Vec<MDTableRow<T>>
+}
+
+impl<T> MDTable<T>
+where T: MDTableRowTrait + std::fmt::Debug + Default + Clone{
+    pub fn new(num_rows: &usize,
+               strings_offset_size: usize,
+               guids_offset_size: usize,
+               blobs_offset_size: usize,
+               tables_row_counts: &Vec<usize>) -> Result<MDTable<T>>{
+        Ok(MDTable::<T>{
+            table: vec![MDTableRow::<T>::new(strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts); *num_rows]
+        })
+    }
+    pub fn row_size(&self) -> usize{
+        unimplemented!()
+    }
+}
+
+impl<T> MDTableTrait for MDTable<T>
+where T: 'static + MDTableRowTrait + std::fmt::Debug + Default + Clone{
+    fn set_data(&mut self, data: Vec<u8>) -> Result<()>{
+        unimplemented!()
+    }
+
+    fn row_size(&self) -> usize{
+        if self.table.len() == 0 {
+            0
+        } else {
+            self.table[0].size()
+        }
+    }
+}
+
+
+pub trait MDTableRowTrait : std::fmt::Debug + Default + Clone{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize;
+}
+
+#[derive(Debug, Clone)]
+pub struct MDTableRow<T>
+where T: MDTableRowTrait{
+    str_offset_size: usize,
+    guids_offset_size: usize,
+    blobs_offset_size: usize,
+    tables_row_counts: Vec<usize>,
+    row: T,
+    pub data: Vec<u8>
+}
+
+impl<T> MDTableRow<T>
+where T: MDTableRowTrait{
+    pub fn new(str_offset_size: usize,
+               guids_offset_size: usize,
+               blobs_offset_size: usize,
+               tables_row_counts: &Vec<usize>) -> MDTableRow<T>{
+        MDTableRow{
+            str_offset_size,
+            guids_offset_size,
+            blobs_offset_size,
+            tables_row_counts: tables_row_counts.to_vec(),
+            row: T::default(),
+            data: vec![]
+        }
+    }
+
+    pub fn size(&self) -> usize{
+        self.row.size(self.str_offset_size, self.guids_offset_size, self.blobs_offset_size, &self.tables_row_counts)
+    }
+}
+
+#[derive(Debug, Clone, Default)]
 pub struct Module{
-    generation: u16,
-    name: String,
-    mvid: uuid::Uuid,
-    enc_id: uuid::Uuid,
-    enc_base_id: uuid::Uuid
+    pub generation: u16,
+    pub name: String,
+    pub mvid: uuid::Uuid,
+    pub enc_id: uuid::Uuid,
+    pub enc_base_id: uuid::Uuid,
+}
+
+impl MDTableRowTrait for Module{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
+        2 + str_offset_size + 3*guids_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -126,6 +119,13 @@ pub struct TypeRef{
     resolution_scope: codedindex::ResolutionScope,
     type_name: String,
     type_namespace: String
+}
+
+impl MDTableRowTrait for TypeRef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(self.resolution_scope.tag_bits, &self.resolution_scope.table_names, tables_row_counts)
+            + 2*str_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -138,22 +138,56 @@ pub struct TypeDef{
     method_list: Vec<MethodDef>
 }
 
+impl MDTableRowTrait for TypeDef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 2*str_offset_size
+            + codedindex::clr_coded_index_struct_size(self.extends.tag_bits, &self.extends.table_names, tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct FieldPtr{
     field: Field
 }
 
+impl MDTableRowTrait for FieldPtr{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct Field{
     flags: Option<enums::ClrFieldAttr>,
     name: String,
-    Signature: Vec<u8>
+    signature: Vec<u8>
 }
+
+impl MDTableRowTrait for Field{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + str_offset_size
+            + blobs_offset_size
+    }
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodPtr{
     field: MethodDef
 }
+
+impl MDTableRowTrait for MethodPtr{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
+    }
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodDef{
@@ -165,10 +199,29 @@ pub struct MethodDef{
     param_list: Vec<Param>
 }
 
+impl MDTableRowTrait for MethodDef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 2
+            + 2
+            + str_offset_size
+            + blobs_offset_size
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts)
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct ParamPtr{
     field: Param
 }
+
+impl MDTableRowTrait for ParamPtr{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts)
+    }
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct Param{
@@ -177,17 +230,42 @@ pub struct Param{
     name: String
 }
 
+impl MDTableRowTrait for Param{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + 2
+            + str_offset_size
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct InterfaceImpl{
     class: TypeDef,
     interface: codedindex::TypeDefOrRef
 }
 
+impl MDTableRowTrait for InterfaceImpl{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self.interface.tag_bits, &self.interface.table_names, tables_row_counts)
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct MemberRef{
     class: codedindex::MemberRefParent,
     name: String,
     signature: Vec<u8>
+}
+
+impl MDTableRowTrait for MemberRef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(self.class.tag_bits, &self.class.table_names, tables_row_counts)
+            + str_offset_size
+            + blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -198,6 +276,15 @@ pub struct Constant{
     value: Vec<u8>
 }
 
+impl MDTableRowTrait for Constant{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        1
+            + 1
+            + codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
+            + blobs_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct CustomAttribute{
     parent: codedindex::HasCustomAttribute,
@@ -205,10 +292,25 @@ pub struct CustomAttribute{
     value: Vec<u8>
 }
 
+impl MDTableRowTrait for CustomAttribute{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self._type.tag_bits, &self._type.table_names, tables_row_counts)
+            + blobs_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct FieldMarshal{
     parent: codedindex::HasFieldMarshall,
     native_type: Vec<u8>
+}
+
+impl MDTableRowTrait for FieldMarshal{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
+            + blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -218,11 +320,28 @@ pub struct DeclSecurity{
     permission_set: Vec<u8>
 }
 
+impl MDTableRowTrait for DeclSecurity{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
+            + blobs_offset_size
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct ClassLayout{
     packing_size: usize,
     class_size: usize,
     parent: TypeDef
+}
+
+impl MDTableRowTrait for ClassLayout{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + 4
+            + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -231,9 +350,22 @@ pub struct FieldLayout{
     field: Field
 }
 
+impl MDTableRowTrait for FieldLayout{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct StandAloneSig{
     signature: Vec<u8>
+}
+
+impl MDTableRowTrait for StandAloneSig{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -242,8 +374,20 @@ pub struct EventMap{
     event_list: Vec<Event>
 }
 
+impl MDTableRowTrait for EventMap{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Event"], tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
-pub struct EventPtr{
+pub struct EventPtr{}
+
+impl MDTableRowTrait for EventPtr{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        0
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -253,14 +397,34 @@ pub struct Event{
     event_type: codedindex::TypeDefOrRef
 }
 
+impl MDTableRowTrait for Event{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + str_offset_size
+            + codedindex::clr_coded_index_struct_size(self.event_type.tag_bits, &self.event_type.table_names, tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct PropertyMap{
     parent: TypeDef,
     property_list: Vec<Property>
 }
 
+impl MDTableRowTrait for PropertyMap{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Property"], tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
-pub struct PropertyPtr{
+pub struct PropertyPtr{}
+
+impl MDTableRowTrait for PropertyPtr{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        0
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -270,12 +434,30 @@ pub struct Property{
     _type: Vec<u8>
 }
 
+impl MDTableRowTrait for Property{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + str_offset_size
+            + blobs_offset_size
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct MethodSemantics{
     semantics: Option<enums::ClrMethodSemanticsAttr>,
     method: MethodDef,
     association: codedindex::HasSemantics
 }
+
+impl MDTableRowTrait for MethodSemantics{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self.association.tag_bits, &self.association.table_names, tables_row_counts)
+    }
+}
+
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodImpl{
@@ -284,14 +466,35 @@ pub struct MethodImpl{
     method_declaration: codedindex::MethodDefOrRef
 }
 
+impl MDTableRowTrait for MethodImpl{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self.method_body.tag_bits, &self.method_body.table_names, tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self.method_declaration.tag_bits, &self.method_declaration.table_names, tables_row_counts)
+    }
+}
+
+
 #[derive(Debug, Clone, Default)]
 pub struct ModuleRef{
     name: String
 }
 
+impl MDTableRowTrait for ModuleRef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        str_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct TypeSpec{
     signature: Vec<u8>
+}
+
+impl MDTableRowTrait for TypeSpec{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -302,10 +505,26 @@ pub struct ImplMap{
     import_scope: ModuleRef
 }
 
+impl MDTableRowTrait for ImplMap{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + codedindex::clr_coded_index_struct_size(self.member_forwarded.tag_bits, &self.member_forwarded.table_names, tables_row_counts)
+            + str_offset_size
+            + codedindex::clr_coded_index_struct_size(0, &vec!["ModuleRef"], tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct FieldRva{
     rva: u32,
     field: Field
+}
+
+impl MDTableRowTrait for FieldRva{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -314,9 +533,21 @@ pub struct EncLog{
     func_code: u32
 }
 
+impl MDTableRowTrait for EncLog{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 4
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct EncMap{
     token: u32,
+}
+impl MDTableRowTrait for EncMap{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -332,9 +563,29 @@ pub struct Assembly{
     culture: String
 }
 
+impl MDTableRowTrait for Assembly{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 2
+            + 2
+            + 2
+            + 2
+            + 4
+            + blobs_offset_size
+            + str_offset_size
+            + str_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct AssemblyProcessor{
     processor: u32,
+}
+
+impl MDTableRowTrait for AssemblyProcessor{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -342,6 +593,13 @@ pub struct AssemblyOS{
     os_platform_id: u32,
     os_major_version: u32,
     os_minor_version: u32
+}
+impl MDTableRowTrait for AssemblyOS{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 4
+            + 4
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -357,10 +615,31 @@ pub struct AssemblyRef{
     hash_value: Vec<u8>
 }
 
+impl MDTableRowTrait for AssemblyRef{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + 2
+            + 2
+            + 2
+            + 4
+            + blobs_offset_size
+            + str_offset_size
+            + str_offset_size
+            + blobs_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct AssemblyRefProcessor{
     processor: u32,
     assembly_ref: AssemblyRef
+}
+
+impl MDTableRowTrait for AssemblyRefProcessor{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + codedindex::clr_coded_index_struct_size(0, &vec!["AssemblyRef"], tables_row_counts)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -371,11 +650,28 @@ pub struct AssemblyRefOS{
     assembly_ref: AssemblyRef
 }
 
+impl MDTableRowTrait for AssemblyRefOS{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 4
+            + 4
+            + codedindex::clr_coded_index_struct_size(0, &vec!["AssemblyRef"], tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct File{
     flags: Option<enums::ClrFileFlags>,
     name: String,
     hash_value: Vec<u8>
+}
+
+impl MDTableRowTrait for File{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + str_offset_size
+            + blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -387,6 +683,16 @@ pub struct ExportedType{
     implementation: codedindex::Implementation
 }
 
+impl MDTableRowTrait for ExportedType{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 4
+            + str_offset_size
+            + str_offset_size
+            + codedindex::clr_coded_index_struct_size(self.implementation.tag_bits, &self.implementation.table_names, tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct ManifestResource{
     offset: u32,
@@ -395,10 +701,26 @@ pub struct ManifestResource{
     implementation: codedindex::Implementation
 }
 
+impl MDTableRowTrait for ManifestResource{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        4
+            + 4
+            + str_offset_size
+            + codedindex::clr_coded_index_struct_size(self.implementation.tag_bits, &self.implementation.table_names, tables_row_counts)
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct NestedClass{
     nested_class: TypeDef,
     enclosing_class: TypeDef
+}
+
+impl MDTableRowTrait for NestedClass{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -409,10 +731,26 @@ pub struct GenericParam{
     name: String
 }
 
+impl MDTableRowTrait for GenericParam{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        2
+            + 2
+            + codedindex::clr_coded_index_struct_size(self.owner.tag_bits, &self.owner.table_names, tables_row_counts)
+            + str_offset_size
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct GenericMethod{
     unknown1: codedindex::MethodDefOrRef,
     unknown2: Vec<u8>
+}
+
+impl MDTableRowTrait for GenericMethod{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(self.unknown1.tag_bits, &self.unknown1.table_names, tables_row_counts)
+            + blobs_offset_size
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -421,12 +759,29 @@ pub struct GenericParamConstraint{
     constraint: codedindex::TypeDefOrRef
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct Unused{
+impl MDTableRowTrait for GenericParamConstraint{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        codedindex::clr_coded_index_struct_size(0, &vec!["GenericParam"], tables_row_counts)
+            + codedindex::clr_coded_index_struct_size(self.constraint.tag_bits, &self.constraint.table_names, tables_row_counts)
+    }
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct MaxTable{
+pub struct Unused{}
+
+impl MDTableRowTrait for Unused{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        0
+    }
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct MaxTable{}
+
+impl MDTableRowTrait for MaxTable{
+    fn size(&self, str_offset_size: usize, guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
+        0
+    }
 }
 
 
@@ -437,7 +792,7 @@ pub struct MetaDataTable{
     pub row_size: usize,
     pub num_rows: usize,
     pub rva: u32,
-    table: MDTable
+    table: Box<dyn MDTableTrait>
 }
 
 impl crate::DnPe<'_>{
@@ -449,11 +804,11 @@ impl crate::DnPe<'_>{
                            guids_offset_size: usize,
                            blobs_offset_size: usize) -> Result<MetaDataTable>{
         let num_rows = table_rowcounts[*i as usize];
-        let table = self.new_mdtable(*i, &num_rows)?;
+        let table = self.new_mdtable(*i, &num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, table_rowcounts)?;
         let mut table = MetaDataTable{
             number: *i,
             is_sorted,
-            row_size: table.row_size(strings_offset_size, guids_offset_size, blobs_offset_size),
+            row_size: table.row_size(),
             num_rows,
             rva: 0,
             table
@@ -461,71 +816,138 @@ impl crate::DnPe<'_>{
         Ok(table)
     }
 
-    pub fn new_table<T>(&self, num_rows: &usize) -> Result<Vec<T>>
-    where T: Default + Clone{
-        Ok(vec![T::default(); *num_rows])
+    pub fn new_table<T>(&self,
+                        num_rows: &usize,
+                        strings_offset_size: usize,
+                        guids_offset_size: usize,
+                        blobs_offset_size: usize,
+                        tables_row_counts: &Vec<usize>) -> Result<MDTable<T>>
+    where T: std::fmt::Debug + Default + Clone + MDTableRowTrait{
+        MDTable::<T>::new(num_rows,
+                          strings_offset_size,
+                          guids_offset_size,
+                          blobs_offset_size,
+                          tables_row_counts)
     }
 
     pub fn new_mdtable(&self, i: usize,
-                       num_rows: &usize) -> Result<MDTable>{
+                       num_rows: &usize,
+                       strings_offset_size: usize,
+                       guids_offset_size: usize,
+                       blobs_offset_size: usize,
+                       tables_row_counts: &Vec<usize>) -> Result<Box<dyn MDTableTrait>>{
         match i{
-            0 => Ok(MDTable::Module(self.new_table::<Module>(num_rows)?)),
-            1 => Ok(MDTable::TypeRef(self.new_table::<TypeRef>(num_rows)?)),
-            2 => Ok(MDTable::TypeDef(self.new_table::<TypeDef>(num_rows)?)),
-            3 => Ok(MDTable::FieldPtr(self.new_table::<FieldPtr>(num_rows)?)),
-            4 => Ok(MDTable::Field(self.new_table::<Field>(num_rows)?)),
-            5 => Ok(MDTable::MethodPtr(self.new_table::<MethodPtr>(num_rows)?)),
-            6 => Ok(MDTable::MethodDef(self.new_table::<MethodDef>(num_rows)?)),
-            7 => Ok(MDTable::ParamPtr(self.new_table::<ParamPtr>(num_rows)?)),
-            8 => Ok(MDTable::Param(self.new_table::<Param>(num_rows)?)),
-            9 => Ok(MDTable::InterfaceImpl(self.new_table::<InterfaceImpl>(num_rows)?)),
-            10 => Ok(MDTable::MemberRef(self.new_table::<MemberRef>(num_rows)?)),
-            11 => Ok(MDTable::Constant(self.new_table::<Constant>(num_rows)?)),
-            12 => Ok(MDTable::CustomAttribute(self.new_table::<CustomAttribute>(num_rows)?)),
-            13 => Ok(MDTable::FieldMarshal(self.new_table::<FieldMarshal>(num_rows)?)),
-            14 => Ok(MDTable::DeclSecurity(self.new_table::<DeclSecurity>(num_rows)?)),
-            15 => Ok(MDTable::ClassLayout(self.new_table::<ClassLayout>(num_rows)?)),
-            16 => Ok(MDTable::FieldLayout(self.new_table::<FieldLayout>(num_rows)?)),
-            17 => Ok(MDTable::StandAloneSig(self.new_table::<StandAloneSig>(num_rows)?)),
-            18 => Ok(MDTable::EventMap(self.new_table::<EventMap>(num_rows)?)),
-            19 => Ok(MDTable::EventPtr(self.new_table::<EventPtr>(num_rows)?)),
-            20 => Ok(MDTable::Event(self.new_table::<Event>(num_rows)?)),
-            21 => Ok(MDTable::PropertyMap(self.new_table::<PropertyMap>(num_rows)?)),
-            22 => Ok(MDTable::PropertyPtr(self.new_table::<PropertyPtr>(num_rows)?)),
-            23 => Ok(MDTable::Property(self.new_table::<Property>(num_rows)?)),
-            24 => Ok(MDTable::MethodSemantics(self.new_table::<MethodSemantics>(num_rows)?)),
-            25 => Ok(MDTable::MethodImpl(self.new_table::<MethodImpl>(num_rows)?)),
-            26 => Ok(MDTable::ModuleRef(self.new_table::<ModuleRef>(num_rows)?)),
-            27 => Ok(MDTable::TypeSpec(self.new_table::<TypeSpec>(num_rows)?)),
-            28 => Ok(MDTable::ImplMap(self.new_table::<ImplMap>(num_rows)?)),
-            29 => Ok(MDTable::FieldRva(self.new_table::<FieldRva>(num_rows)?)),
-            30 => Ok(MDTable::EncLog(self.new_table::<EncLog>(num_rows)?)),
-            31 => Ok(MDTable::EncMap(self.new_table::<EncMap>(num_rows)?)),
-            32 => Ok(MDTable::Assembly(self.new_table::<Assembly>(num_rows)?)),
-            33 => Ok(MDTable::AssemblyProcessor(self.new_table::<AssemblyProcessor>(num_rows)?)),
-            34 => Ok(MDTable::AssemblyOS(self.new_table::<AssemblyOS>(num_rows)?)),
-            35 => Ok(MDTable::AssemblyRef(self.new_table::<AssemblyRef>(num_rows)?)),
-            36 => Ok(MDTable::AssemblyRefProcessor(self.new_table::<AssemblyRefProcessor>(num_rows)?)),
-            37 => Ok(MDTable::AssemblyRefOS(self.new_table::<AssemblyRefOS>(num_rows)?)),
-            38 => Ok(MDTable::File(self.new_table::<File>(num_rows)?)),
-            39 => Ok(MDTable::ExportedType(self.new_table::<ExportedType>(num_rows)?)),
-            40 => Ok(MDTable::ManifestResource(self.new_table::<ManifestResource>(num_rows)?)),
-            41 => Ok(MDTable::NestedClass(self.new_table::<NestedClass>(num_rows)?)),
-            42 => Ok(MDTable::GenericParam(self.new_table::<GenericParam>(num_rows)?)),
-            43 => Ok(MDTable::GenericMethod(self.new_table::<GenericMethod>(num_rows)?)),
-            44 => Ok(MDTable::GenericParamConstraint(self.new_table::<GenericParamConstraint>(num_rows)?)),
+            0 => Ok(Box::new(self.new_table::<Module>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            1 => Ok(Box::new(self.new_table::<TypeRef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            2 => Ok(Box::new(self.new_table::<TypeDef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            3 => Ok(Box::new(self.new_table::<FieldPtr>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            4 => Ok(Box::new(self.new_table::<Field>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            5 => Ok(Box::new(self.new_table::<MethodPtr>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            6 => Ok(Box::new(self.new_table::<MethodDef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            7 => Ok(Box::new(self.new_table::<ParamPtr>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            8 => Ok(Box::new(self.new_table::<Param>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            9 => Ok(Box::new(self.new_table::<InterfaceImpl>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            10 => Ok(Box::new(self.new_table::<MemberRef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            11 => Ok(Box::new(self.new_table::<Constant>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            12 => Ok(Box::new(self.new_table::<CustomAttribute>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            13 => Ok(Box::new(self.new_table::<FieldMarshal>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            14 => Ok(Box::new(self.new_table::<DeclSecurity>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            15 => Ok(Box::new(self.new_table::<ClassLayout>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            16 => Ok(Box::new(self.new_table::<FieldLayout>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            17 => Ok(Box::new(self.new_table::<StandAloneSig>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            18 => Ok(Box::new(self.new_table::<EventMap>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            19 => Ok(Box::new(self.new_table::<EventPtr>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            20 => Ok(Box::new(self.new_table::<Event>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            21 => Ok(Box::new(self.new_table::<PropertyMap>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            22 => Ok(Box::new(self.new_table::<PropertyPtr>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            23 => Ok(Box::new(self.new_table::<Property>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            24 => Ok(Box::new(self.new_table::<MethodSemantics>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            25 => Ok(Box::new(self.new_table::<MethodImpl>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            26 => Ok(Box::new(self.new_table::<ModuleRef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            27 => Ok(Box::new(self.new_table::<TypeSpec>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            28 => Ok(Box::new(self.new_table::<ImplMap>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            29 => Ok(Box::new(self.new_table::<FieldRva>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            30 => Ok(Box::new(self.new_table::<EncLog>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            31 => Ok(Box::new(self.new_table::<EncMap>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            32 => Ok(Box::new(self.new_table::<Assembly>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            33 => Ok(Box::new(self.new_table::<AssemblyProcessor>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            34 => Ok(Box::new(self.new_table::<AssemblyOS>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            35 => Ok(Box::new(self.new_table::<AssemblyRef>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            36 => Ok(Box::new(self.new_table::<AssemblyRefProcessor>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            37 => Ok(Box::new(self.new_table::<AssemblyRefOS>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            38 => Ok(Box::new(self.new_table::<File>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            39 => Ok(Box::new(self.new_table::<ExportedType>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            40 => Ok(Box::new(self.new_table::<ManifestResource>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            41 => Ok(Box::new(self.new_table::<NestedClass>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            42 => Ok(Box::new(self.new_table::<GenericParam>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            43 => Ok(Box::new(self.new_table::<GenericMethod>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            44 => Ok(Box::new(self.new_table::<GenericParamConstraint>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
             // 45 through 63 are not used
-            62 => Ok(MDTable::Unused(self.new_table::<Unused>(num_rows)?)),
-            63 => Ok(MDTable::MaxTable(self.new_table::<MaxTable>(num_rows)?)),
+            62 => Ok(Box::new(self.new_table::<Unused>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
+            63 => Ok(Box::new(self.new_table::<MaxTable>(num_rows, strings_offset_size, guids_offset_size, blobs_offset_size, tables_row_counts)?)),
             _ => Err(crate::error::Error::UndefinedMetaDataTableIndex(i as u32))
         }
     }
 
     pub fn parse_rows(&self, table: &MetaDataTable, rva: &u32, table_data: Vec<u8>) -> Result<MetaDataTable>{
-        Ok(table.clone())
+        unimplemented!()
     }
 
     pub fn parse_table(&self, table: &MetaDataTable, ttables: &std::collections::HashMap<usize, MetaDataTable>) -> Result<MetaDataTable>{
-        Ok(table.clone())
+        unimplemented!()
+    }
+}
+
+pub fn table_name_2_index(name: &'static str) -> Result<usize>{
+    match name{
+        "Module" => Ok(0),
+        "TypeRef" => Ok(1),
+        "TypeDef" => Ok(2),
+        "FieldPtr" => Ok(3),
+        "Field" => Ok(4),
+        "MethodPtr" => Ok(5),
+        "MethodDef" => Ok(6),
+        "ParamPtr" => Ok(7),
+        "Param" => Ok(8),
+        "InterfaceImpl" => Ok(9),
+        "MemberRef" => Ok(10),
+        "Constant" => Ok(11),
+        "CustomAttribute" => Ok(12),
+        "FieldMarshal" => Ok(13),
+        "DeclSecurity" => Ok(14),
+        "ClassLayout" => Ok(15),
+        "FieldLayout" => Ok(16),
+        "StandAloneSig" => Ok(17),
+        "EventMap" => Ok(18),
+        "EventPtr" => Ok(19),
+        "Event" => Ok(20),
+        "PropertyMap" => Ok(21),
+        "PropertyPtr" => Ok(22),
+        "Property" => Ok(23),
+        "MethodSemantics" => Ok(24),
+        "MethodImpl" => Ok(25),
+        "ModuleRef" => Ok(26),
+        "TypeSpec" => Ok(27),
+        "ImplMap" => Ok(28),
+        "FieldRva" => Ok(29),
+        "EncLog" => Ok(30),
+        "EncMap" => Ok(31),
+        "Assembly" => Ok(32),
+        "AssemblyProcessor" => Ok(33),
+        "AssemblyOS" => Ok(34),
+        "AssemblyRef" => Ok(35),
+        "AssemblyRefProcessor" => Ok(36),
+        "AssemblyRefOS" => Ok(37),
+        "File" => Ok(38),
+        "ExportedType" => Ok(39),
+        "ManifestResource" => Ok(40),
+        "NestedClass" => Ok(41),
+        "GenericParam" => Ok(42),
+        "GenericMethod" => Ok(43),
+        "GenericParamConstraint" => Ok(44),
+        // 45 through 63 are not used
+        "Unused" => Ok(62),
+        "MaxTable" => Ok(63),
+        _ => Err(crate::error::Error::UndefinedMetaDataTableName(name))
     }
 }

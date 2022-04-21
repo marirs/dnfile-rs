@@ -18,6 +18,8 @@ pub enum Error {
     UndefinedStream,
     #[error("undefined meta data table index (0..63) {0}")]
     UndefinedMetaDataTableIndex(u32),
+    #[error("undefined meta data table name {0}")]
+    UndefinedMetaDataTableName(&'static str),
     #[error("not implemented")]
     NoiImplementedError,
 }
