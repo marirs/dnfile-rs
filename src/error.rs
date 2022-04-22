@@ -22,6 +22,26 @@ pub enum Error {
     UndefinedMetaDataTableName(&'static str),
     #[error("data not enough {0} required {1}")]
     NotEnoughData(usize, usize),
+    #[error("row index out of bound {0} {1}")]
+    RowIndexOutOfBound(usize, usize),
+    #[error("{0}")]
+    CantReadUsizeFromBytesLen(usize),
+    #[error("{0}")]
+    CodedIndexWithUndefinedTable(String),
+    #[error("{0}")]
+    TryFromSliceError(#[from] std::array::TryFromSliceError),
+    #[error("{0}")]
+    RefToUndefinedHeap(&'static str),
+    #[error("try to read string from non string heap")]
+    TryReadStringFromNotStringHeap,
+    #[error("try to read blob from non blob heap")]
+    TryReadBlobFromNotBlobHeap,
+    #[error("read compressed usize error")]
+    ReadCompressedUsize,
+    #[error("{0} {1}")]
+    StringHeapReadOutOfBound(usize, usize),
+    #[error("{0} {1}")]
+    BlobHeapReadOutOfBound(usize, usize),
     #[error("not implemented")]
     NoiImplementedError,
 }

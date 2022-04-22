@@ -2,6 +2,7 @@ use serde::{Deserialize};
 
 mod error;
 pub mod stream;
+pub mod utils;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 

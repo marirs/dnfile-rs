@@ -97,7 +97,7 @@ impl crate::DnPe<'_>{
         }
         let mut tttables = std::collections::HashMap::new();
         for (n, table) in &ttables{
-            tttables.insert(*n, self.parse_table(table, &ttables)?);
+            tttables.insert(*n, self.parse_table(table, &ttables, strings_heap, blob_heap, guid_heap)?);
         }
         Ok(tttables)
     }

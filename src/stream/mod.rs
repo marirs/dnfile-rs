@@ -30,6 +30,24 @@ impl ClrStream{
     pub fn name(&self) -> &str{
         &self.name
     }
+
+    pub fn get_string(&self, index: &[u8]) -> Result<String>{
+        if let Stream::StringHeap(s) = &self.stream{
+            let index = crate::utils::read_usize(index)?;
+            s.get(index)
+        } else {
+            Err(crate::error::Error::TryReadStringFromNotStringHeap)
+        }
+    }
+
+    pub fn get_blob(&self, index: &[u8]) -> Result<Vec<u8>>{
+        if let Stream::BlobHeap(s) = &self.stream{
+            let index = crate::utils::read_usize(index)?;
+            s.get(index)
+        } else {
+            Err(crate::error::Error::TryReadStringFromNotStringHeap)
+        }
+    }
 }
 
 impl crate::DnPe<'_>{

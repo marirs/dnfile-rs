@@ -5,6 +5,23 @@ pub struct StringHeap{
     data: Vec<u8>
 }
 
+impl StringHeap{
+    pub fn get(&self, index: usize) -> Result<String>{
+        if index >= self.data.len(){
+            return Err(crate::error::Error::StringHeapReadOutOfBound(index, self.data.len()));
+        }
+        let mut res_buf = vec![];
+        for i in index..self.data.len(){
+            if self.data[i] != 0{
+                res_buf.push(self.data[i]);
+            } else {
+                break;
+            }
+        }
+        Ok(String::from_utf8_lossy(&res_buf).to_string())
+    }
+}
+
 impl crate::DnPe<'_>{
     pub fn new_string_heap(&self,
                            _metadata_rva: &u32,
