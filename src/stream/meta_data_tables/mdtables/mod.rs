@@ -216,14 +216,26 @@ impl MDTableRowTrait for Module{
              data: &Vec<u8>,
              str_offset_size: usize,
              guids_offset_size: usize,
-             blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::HashMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _blobs_offset_size: usize,
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::HashMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
+             _blobs_heap: &Option<&crate::stream::ClrStream>,
              guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+        let s1 = 2;
+        let s2 = str_offset_size;
+        let s3 = guids_offset_size;
+        let s4 = guids_offset_size;
+        let s5 = guids_offset_size;
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("string"))};
+        let guids_heap = if let Some(s) = guids_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.generation = crate::utils::read_usize(&data[0..s1])? as u16;
+        self.name = strings_heap.get_string(&data[s1..s1+s2])?;
+        self.mvid = guids_heap.get_guid(&data[s1+s2..s1+s2+s3])?;
+        self.enc_id = guids_heap.get_guid(&data[s1+s2+s3..s1+s2+s3+s4])?;
+        self.enc_base_id= guids_heap.get_guid(&data[s1+s2+s3+s4..s1+s2+s3+s4+s5])?;
+        Ok(())
     }
 }
 
@@ -262,7 +274,7 @@ impl MDTableRowTrait for TypeRef{
 
 #[derive(Debug, Clone, Default)]
 pub struct TypeDef{
-    flags: Option<enums::ClrTypeAttr>,
+    flags: enums::ClrTypeAttr,
     type_name: String,
     type_namespace: String,
     extends: codedindex::TypeDefOrRef,
@@ -282,21 +294,28 @@ impl MDTableRowTrait for TypeDef{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::HashMap<usize, MetaDataTable>,
              next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+             _blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
         let s1 = 4;
         let s2 = str_offset_size;
         let s3 = str_offset_size;
         let s4 = codedindex::clr_coded_index_struct_size(self.extends.tag_bits, &self.extends.table_names, tables_row_counts);
         let s5 = codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
         let s6 = codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
-
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("string"))};
+        self.flags.set(&data[0..s1])?;
+        self.type_name = strings_heap.get_string(&data[s1..s1+s2])?;
+        self.type_namespace = strings_heap.get_string(&data[s1+s2..s1+s2+s3])?;
+        self.extends.set(&data[s1+s2+s3..s1+s2+s3+s4], tables)?;
+        self.field_list = vec![];
+        self.method_list = vec![];
+        Ok(())
     }
 }
 
@@ -594,7 +613,7 @@ impl MDTableRowTrait for CustomAttribute{
         self.parent.set(&data[0..first], tables)?;
         self._type.set(&data[first..first+second], tables)?;
         self.value = blobs_heap.get_blob(&data[first+second..first+second+blobs_offset_size])?;
-        unimplemented!()
+        Ok(())
     }
 }
 
@@ -1115,12 +1134,12 @@ impl MDTableRowTrait for EncMap{
 
 #[derive(Debug, Clone, Default)]
 pub struct Assembly{
-    hash_alg_id: Option<enums::AssemblyHashAlgorithm>,
+    hash_alg_id: enums::AssemblyHashAlgorithm,
     major_version: u32,
     minor_version: u32,
     build_number: u32,
     revision_number: u32,
-    flags: Option<enums::ClrAssemblyFlags>,
+    flags: Vec<enums::ClrAssemblyFlags>,
     public_key: Vec<u8>,
     name: String,
     culture: String
@@ -1142,15 +1161,35 @@ impl MDTableRowTrait for Assembly{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::HashMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::HashMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 4;
+        let s2 = s1 + 2;
+        let s3 = s2 + 2;
+        let s4 = s3 + 2;
+        let s5 = s4 + 2;
+        let s6 = s5 + 4;
+        let s7 = s6 + blobs_offset_size;
+        let s8 = s7 + str_offset_size;
+        let s9 = s8 + str_offset_size;
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("string"))};
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.hash_alg_id = enums::AssemblyHashAlgorithm::new(crate::utils::read_usize(&data[0..s1])?);
+        self.major_version = crate::utils::read_usize(&data[s1..s2])? as u32;
+        self.minor_version = crate::utils::read_usize(&data[s2..s3])? as u32;
+        self.build_number = crate::utils::read_usize(&data[s3..s4])? as u32;
+        self.revision_number = crate::utils::read_usize(&data[s4..s5])? as u32;
+        self.flags = enums::ClrAssemblyFlags::new(crate::utils::read_usize(&data[s5..s6])?);
+        self.public_key = blobs_heap.get_blob(&data[s6..s7])?;
+        self.name = strings_heap.get_string(&data[s7..s8])?;
+        self.culture = strings_heap.get_string(&data[s8..s9])?;
+        Ok(())
     }
 }
 

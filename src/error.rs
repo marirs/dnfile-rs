@@ -36,12 +36,20 @@ pub enum Error {
     TryReadStringFromNotStringHeap,
     #[error("try to read blob from non blob heap")]
     TryReadBlobFromNotBlobHeap,
+    #[error("try to read guid from non guid heap")]
+    TryReadGuidFromNotGuidHeap,
     #[error("read compressed usize error")]
     ReadCompressedUsize,
     #[error("{0} {1}")]
     StringHeapReadOutOfBound(usize, usize),
     #[error("{0} {1}")]
     BlobHeapReadOutOfBound(usize, usize),
+    #[error("{0} {1}")]
+    GuidHeapReadOutOfBound(usize, usize),
+    #[error("{0}")]
+    FormatError(String),
+    #[error("{0}")]
+    ParseGuidError(#[from] uuid::Error),
     #[error("not implemented")]
     NoiImplementedError,
 }

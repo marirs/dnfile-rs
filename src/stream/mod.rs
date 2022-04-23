@@ -48,6 +48,15 @@ impl ClrStream{
             Err(crate::error::Error::TryReadStringFromNotStringHeap)
         }
     }
+
+    pub fn get_guid(&self, index: &[u8]) -> Result<uuid::Uuid>{
+        if let Stream::GuidHeap(s) = &self.stream{
+            let index = crate::utils::read_usize(index)?;
+            s.get(index)
+        } else {
+            Err(crate::error::Error::TryReadGuidFromNotGuidHeap)
+        }
+    }
 }
 
 impl crate::DnPe<'_>{
