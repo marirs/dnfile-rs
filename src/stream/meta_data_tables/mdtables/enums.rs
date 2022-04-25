@@ -154,7 +154,73 @@ impl Default for CorTypeStringFormat{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrMethodImpl{}
+pub enum CorMethodCodeType{
+    IL,
+    Native,
+    OPTIL,
+    Runtime
+}
+
+impl CorMethodCodeType{
+    pub fn new(value: usize) -> Self{
+        match value & 0x3{
+            1 => Self::Native,
+            2 => Self::OPTIL,
+            3 => Self::Runtime,
+            _ => Self::IL,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum CorMethodManaged{
+    Unmanaged,
+    Managed
+}
+
+impl CorMethodManaged{
+    pub fn new(value: usize) -> Self{
+        match value & 0x4{
+            4 => Self::Unmanaged,
+            _ => Self::Managed,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ClrMethodImpl{
+    MethodCodeType(CorMethodCodeType),
+    MethodManaged(CorMethodManaged),
+    ForwardRef,
+    PreserveSig,
+    InternalCall,
+    Synchronized,
+    NoInlining,
+    MaxMethodImplVal
+}
+impl ClrMethodImpl{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 0x10 != 0{
+            res.push(Self::ForwardRef);
+        }
+        if value & 0x080 != 0{
+            res.push(Self::PreserveSig);
+        }
+        if value & 0x1000 != 0{
+            res.push(Self::InternalCall);
+        }
+        if value & 0x20 != 0{
+            res.push(Self::NoInlining);
+        }
+        if value & 0x8 != 0{
+            res.push(Self::MaxMethodImplVal);
+        }
+        res.push(Self::MethodCodeType(CorMethodCodeType::new(value)));
+        res.push(Self::MethodManaged(CorMethodManaged::new(value)));
+        res
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct ClrTypeAttr{
@@ -184,10 +250,153 @@ impl ClrTypeAttr{
 pub enum ClrFieldAttr{}
 
 #[derive(Debug, Clone)]
-pub enum ClrMethodAttr{}
+pub enum CorMethodMemberAccess{
+    PrivateScope,
+    Private,
+    FamANDAssem,
+    Assem,
+    Family,
+    FamORAssem,
+    Public,
+    Unknown1
+}
+
+impl CorMethodMemberAccess{
+    pub fn new(value: usize) -> Self{
+        match value & 0x7{
+            1 => Self::Private,
+            2 => Self::FamANDAssem,
+            3 => Self::Assem,
+            4 => Self::Family,
+            5 => Self::FamORAssem,
+            6 => Self::Public,
+            7 => Self::Unknown1,
+            _ => Self::PrivateScope
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
-pub enum ClrParamAttr{}
+pub enum CorMethodAttrFlag{
+    Static,
+    Final,
+    Virtual,
+    HideBySig,
+    CheckAccessOnOverride,
+    Abstract,
+    SpecialName,
+    PinvokeImpl,
+    UnmanagedExport,
+    RTSpecialName,
+    HasSecurity,
+    RequireSecObject
+}
+
+impl CorMethodAttrFlag{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 0x10 != 0{
+            res.push(Self::Static);
+        }
+        if value & 0x20 != 0{
+            res.push(Self::Final);
+        }
+        if value & 0x40 != 0{
+            res.push(Self::Virtual);
+        }
+        if value & 0x80 != 0{
+            res.push(Self::HideBySig);
+        }
+        if value & 0x200 != 0{
+            res.push(Self::CheckAccessOnOverride);
+        }
+        if value & 0x400 != 0{
+            res.push(Self::Abstract);
+        }
+        if value & 0x800 != 0{
+            res.push(Self::SpecialName);
+        }
+        if value & 0x2000 != 0{
+            res.push(Self::PinvokeImpl);
+        }
+        if value & 0x8 != 0{
+            res.push(Self::UnmanagedExport);
+        }
+        if value & 0x1000 != 0{
+            res.push(Self::RTSpecialName);
+        }
+        if value & 0x4000 != 0{
+            res.push(Self::HasSecurity);
+        }
+        if value & 0x8000 != 0{
+            res.push(Self::RTSpecialName);
+        }
+        res
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum CorMethodVtableLayout{
+    ReuseSlot,
+    NewSlot
+}
+
+impl CorMethodVtableLayout{
+    pub fn new(value: usize) -> Self{
+        match value & 0x100 {
+            0x100 => Self::NewSlot,
+            _ => Self::ReuseSlot
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ClrMethodAttr{
+    MemberAccess(CorMethodMemberAccess),
+    AttrFlag(Vec<CorMethodAttrFlag>),
+    VtableLayout(CorMethodVtableLayout)
+}
+
+impl ClrMethodAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        res.push(Self::MemberAccess(CorMethodMemberAccess::new(value)));
+        res.push(Self::AttrFlag(CorMethodAttrFlag::new(value)));
+        res.push(Self::VtableLayout(CorMethodVtableLayout::new(value)));
+        res
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ClrParamAttr{
+    In,
+    Out,
+    Optional,
+    HasDefault,
+    HasFieldMarshal
+}
+
+impl ClrParamAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 1 != 0{
+            res.push(Self::In);
+        }
+        if value & 2 != 0{
+            res.push(Self::Out);
+        }
+        if value & 0x10 != 0{
+            res.push(Self::Optional);
+        }
+        if value & 0x1000 != 0{
+            res.push(Self::HasDefault);
+        }
+        if value & 0x2000 != 0{
+            res.push(Self::HasFieldMarshal);
+        }
+        res
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum ClrEventAttr{}

@@ -23,7 +23,7 @@ pub trait CodedIndex{
     fn set_table(&mut self, value: String);
     fn get_table_name(&self, index: usize) -> Result<&'static str>;
     fn get_tag_bits(&self) -> usize;
-    fn set(&mut self, value: &[u8], tables: &std::collections::HashMap<usize, super::MetaDataTable>) -> Result<()>{
+    fn set(&mut self, value: &[u8], tables: &std::collections::BTreeMap<usize, super::MetaDataTable>) -> Result<()>{
         let value = crate::utils::read_usize(value)?;
         let  table_name = self.get_table_name(value & ((1 << self.get_tag_bits()) - 1))?;
         self.set_row_index(value >> self.get_tag_bits());

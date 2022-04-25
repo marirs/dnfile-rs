@@ -115,7 +115,7 @@ impl DnPe<'_>{
         for (n, s) in &res{
             rres.insert(n.to_string(), self.parse_clr_stream(s, &res)?);
         }
-        Ok(res)
+        Ok(rres)
     }
 
     fn new_clr_stream(&self, stream_table_entry_rva: &u32, metadata_rva: &u32) -> Result<stream::ClrStream>{

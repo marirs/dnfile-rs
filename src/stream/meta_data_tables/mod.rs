@@ -34,9 +34,8 @@ impl crate::DnPe<'_>{
 
     pub fn parse_meta_data_tables(&self,
                                   s: &mut MetaDataTable,
-                                  stream_map: &std::collections::HashMap<String, super::ClrStream>) -> Result<std::collections::HashMap<usize, mdtables::MetaDataTable>>{
-       // let header = MDTablesStruct
-        let mut tables = std::collections::HashMap::new();
+                                  stream_map: &std::collections::HashMap<String, super::ClrStream>) -> Result<std::collections::BTreeMap<usize, mdtables::MetaDataTable>>{
+        let mut tables = std::collections::BTreeMap::new();
         let header_len = std::mem::size_of::<MDTablesStruct>();
         let header: MDTablesStruct = self.get_data(&s.rva, &header_len)?;
         let strings_offset_size = if header.heap_offset_sizes & STRINGS_MASK != 0 { 4 } else { 2 };
@@ -83,7 +82,7 @@ impl crate::DnPe<'_>{
                 }
             }
         }
-        let mut ttables = std::collections::HashMap::new();
+        let mut ttables = std::collections::BTreeMap::new();
         for (n, table) in &tables{
             if table.row_size > 0 && table.num_rows > 0{
                 let table_data = self.get_vec(&curr_rva, &(table.row_size * table.num_rows))?;
@@ -95,7 +94,7 @@ impl crate::DnPe<'_>{
                 ttables.insert(*n, table.clone());
             }
         }
-        let mut tttables = std::collections::HashMap::new();
+        let mut tttables = std::collections::BTreeMap::new();
         for (n, table) in &ttables{
             tttables.insert(*n, self.parse_table(table, &ttables, strings_heap, blob_heap, guid_heap)?);
         }
