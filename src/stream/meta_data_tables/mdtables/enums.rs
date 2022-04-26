@@ -501,12 +501,84 @@ impl ClrPropertyAttr{
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum ClrMethodSemanticsAttr{
+    Setter,
+    Getter,
+    Other,
+    AddOn,
+    RemoveOn,
+    Fire
+}
+
+impl ClrMethodSemanticsAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 0x1 != 0{
+            res.push(Self::Setter);
+        }
+        if value & 0x2 != 0{
+            res.push(Self::Getter);
+        }
+        if value & 0x4 != 0{
+            res.push(Self::Other);
+        }
+        if value & 0x8 != 0{
+            res.push(Self::AddOn);
+        }
+        if value & 0x10 != 0{
+            res.push(Self::RemoveOn);
+        }
+        if value & 0x20 != 0{
+            res.push(Self::Fire);
+        }
+        res
+    }
+}
+
 
 #[derive(Debug, Clone)]
-pub enum ClrMethodSemanticsAttr{}
+pub enum CorPinvokeMapCharSet{
+    NotSpec,
+    Ansi,
+    Unicode,
+    Auto
+}
 
 #[derive(Debug, Clone)]
-pub enum ClrPinvokeMap{}
+pub enum  CorPinvokeBestFit{
+    UseAssem,
+    Enabled,
+    Disabled
+}
+
+#[derive(Debug, Clone)]
+pub enum CorPinvokeThrowOnUnmappableChar{
+    UseAssem,
+    Enabled,
+    Disabled
+}
+
+#[derive(Debug, Clone)]
+pub enum CorPinvokeCallConv{
+    Winapi,
+    Cdecl,
+    Stdcall,
+    Thiscall,
+    Fastcall,
+    Unknown1,
+    Unknown2
+}
+
+#[derive(Debug, Clone)]
+pub enum ClrPinvokeMap{
+    CharSet(CorPinvokeMapCharSet),
+    BestFit(CorPinvokeBestFit),
+    ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar),
+    CallConv(CorPinvokeCallConv),
+    NoMangle,
+    SupportsLastError
+}
 
 #[derive(Debug, Clone)]
 pub enum AssemblyHashAlgorithm{

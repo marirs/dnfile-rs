@@ -1008,8 +1008,8 @@ impl MDTableRowTrait for Property{
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodSemantics{
-    semantics: Option<enums::ClrMethodSemanticsAttr>,
-    method: MethodDef,
+    semantics: Vec<enums::ClrMethodSemanticsAttr>,
+    method: codedindex::SimpleCodedIndex,
     association: codedindex::HasSemantics
 }
 
@@ -1022,16 +1022,22 @@ impl MDTableRowTrait for MethodSemantics{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             _blobss_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
+        let s3 = s2 + codedindex::clr_coded_index_struct_size(self.association.tag_bits, &self.association.table_names, tables_row_counts);
+        self.semantics = enums::ClrMethodSemanticsAttr::new(crate::utils::read_usize(&data[0..s1])?);
+        self.method = codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &data[s1..s2], tables)?;
+        self.association.set(&data[s2..s3], tables);
+        Ok(())
     }
 }
 
@@ -1078,15 +1084,18 @@ impl MDTableRowTrait for ModuleRef{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _blobss_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = str_offset_size;
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.name = strings_heap.get_string(&data[0..s1])?;
+        Ok(())
     }
 }
 
@@ -1117,10 +1126,10 @@ impl MDTableRowTrait for TypeSpec{
 
 #[derive(Debug, Clone, Default)]
 pub struct ImplMap{
-    mapping_flags: Option<enums::ClrPinvokeMap>,
+    mapping_flags: Vec<enums::ClrPinvokeMap>,
     member_forwarded: codedindex::MemberForwarded,
     import_name: String,
-    import_scope: ModuleRef
+    import_scope: codedindex::SimpleCodedIndex //moduleref
 }
 
 impl MDTableRowTrait for ImplMap{
@@ -1134,15 +1143,24 @@ impl MDTableRowTrait for ImplMap{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _blobss_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(self.member_forwarded.tag_bits, &self.member_forwarded.table_names, tables_row_counts);
+        let s3 = s2 + str_offset_size;
+        let s4 = s3 + codedindex::clr_coded_index_struct_size(0, &vec!["ModuleRef"], tables_row_counts);
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.mapping_flags = enums::ClrPinvokeMap::new(crate::utils::read_usize(&data[0..s1])?);
+        self.member_forwarded.set(&data[s1..s2], tables)?;
+        self.import_name = strings_heap.get_string(&data[s2..s3])?;
+        self.import_scope = codedindex::SimpleCodedIndex::new(vec!["MethodRef"], 0, &data[s3..s4], tables)?;
+        Ok(())
     }
 }
 
