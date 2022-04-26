@@ -1,4 +1,5 @@
 use crate::Result;
+use serde::ser::{Serialize, Serializer, SerializeSeq, SerializeStruct};
 
 pub mod codedindex;
 use codedindex::CodedIndex;
@@ -11,6 +12,18 @@ pub trait MDTableTrait : std::fmt::Debug + MDTableTraitClone{
     fn get_mut_row(&mut self, i: usize) -> Result<&mut dyn MDTableRowTraitT>;
     fn row_count(&self) -> usize;
     fn name(&self) -> &str;
+}
+
+impl Serialize for dyn MDTableTrait{
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where S: serde::ser::Serializer {
+        let mut table_serializer = serializer.serialize_seq(Some(self.row_count()))?;
+        for i in 0..self.row_count(){
+//            let s = self.get_row(i).unwrap().get_row();
+//            table_serializer.serialize_element(s)?;
+        }
+        table_serializer.end()
+    }
 }
 
 pub trait MDTableTraitClone {
@@ -200,6 +213,7 @@ where T: MDTableRowTrait + Default{
 
 #[derive(Debug, Clone, Default)]
 pub struct Module{
+
     pub generation: u16,
     pub name: String,
     pub mvid: uuid::Uuid,
@@ -345,10 +359,9 @@ impl MDTableRowTrait for FieldPtr{
     }
 }
 
-
 #[derive(Debug, Clone, Default)]
 pub struct Field{
-    flags: Option<enums::ClrFieldAttr>,
+    flags: Vec<enums::ClrFieldAttr>,
     name: String,
     signature: Vec<u8>
 }
@@ -363,15 +376,23 @@ impl MDTableRowTrait for Field{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = s1 + str_offset_size;
+        let s3 = s2 + blobs_offset_size;
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("string"))};
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.flags = enums::ClrFieldAttr::new(crate::utils::read_usize(&data[0..s1])?);
+        self.name = strings_heap.get_string(&data[s1..s1+s2])?;
+        self.signature = blobs_heap.get_blob(&data[s2..s2+s3])?;
+        Ok(())
     }
 }
 
@@ -598,16 +619,25 @@ impl MDTableRowTrait for Constant{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 1;
+        let s2 = s1 + 1;
+        let s3 = s2 + codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts);
+        let s4 = s3 + blobs_offset_size;
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self._type = crate::utils::read_usize(&data[0..s1])? as u32;
+        self.padding = crate::utils::read_usize(&data[s1..s2])? as u32;
+        self.parent.set(&data[s2..s3], tables)?;
+        self.value = blobs_heap.get_blob(&data[s3..s4])?;
+        Ok(())
     }
 }
 
@@ -660,16 +690,21 @@ impl MDTableRowTrait for FieldMarshal{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts);
+        let s2 = s1 + blobs_offset_size;
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.parent.set(&data[0..s1], tables)?;
+        self.native_type = blobs_heap.get_blob(&data[s1..s2])?;
+        Ok(())
     }
 }
 
@@ -689,16 +724,23 @@ impl MDTableRowTrait for DeclSecurity{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts);
+        let s3 = s2 + blobs_offset_size;
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.action = crate::utils::read_usize(&data[0..s1])? as u32;
+        self.parent.set(&data[s1..s2], tables)?;
+        self.permission_set = blobs_heap.get_blob(&data[s2..s3])?;
+        Ok(())
     }
 }
 
@@ -707,7 +749,7 @@ impl MDTableRowTrait for DeclSecurity{
 pub struct ClassLayout{
     packing_size: usize,
     class_size: usize,
-    parent: TypeDef
+    parent: codedindex::SimpleCodedIndex
 }
 
 impl MDTableRowTrait for ClassLayout{
@@ -719,16 +761,22 @@ impl MDTableRowTrait for ClassLayout{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             _blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = 4;
+        let s3 = s2 + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
+        self.packing_size = crate::utils::read_usize(&data[0..s1])?;
+        self.class_size = crate::utils::read_usize(&data[s1..s2])?;
+        self.parent = codedindex::SimpleCodedIndex::new(vec!["TypeDef"], 0, &data[s2..s3], tables)?;
+        Ok(())
     }
 }
 
@@ -771,16 +819,19 @@ impl MDTableRowTrait for StandAloneSig{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = blobs_offset_size;
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.signature = blobs_heap.get_blob(&data[0..s1])?;
+        Ok(())
     }
 }
 
@@ -865,7 +916,7 @@ impl MDTableRowTrait for Event{
 
 #[derive(Debug, Clone, Default)]
 pub struct PropertyMap{
-    parent: TypeDef,
+    parent: codedindex::SimpleCodedIndex, //typedef
     property_list: Vec<Property>
 }
 
@@ -877,16 +928,20 @@ impl MDTableRowTrait for PropertyMap{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             _blobss_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["Property"], tables_row_counts);
+        self.parent = codedindex::SimpleCodedIndex::new(vec!["TypeDef"], 0, &data[0..s1], tables)?;
+        self.property_list = vec![];
+        Ok(())
     }
 }
 
@@ -915,7 +970,7 @@ impl MDTableRowTrait for PropertyPtr{
 
 #[derive(Debug, Clone, Default)]
 pub struct Property{
-    flags: Option<enums::ClrPropertyAttr>,
+    flags: Vec<enums::ClrPropertyAttr>,
     name: String,
     _type: Vec<u8>
 }
@@ -930,15 +985,23 @@ impl MDTableRowTrait for Property{
     fn parse(&mut self,
              data: &Vec<u8>,
              str_offset_size: usize,
-             guids_offset_size: usize,
+             _guids_offset_size: usize,
              blobs_offset_size: usize,
-             tables_row_counts: &Vec<usize>,
-             tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
+             _tables_row_counts: &Vec<usize>,
+             _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+             _next_row: Option<&dyn MDTableRowTrait>,
              strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             blobs_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 2;
+        let s2 = s1 + str_offset_size;
+        let s3 = s2 + blobs_offset_size;
+        let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
+        self.flags = enums::ClrPropertyAttr::new(crate::utils::read_usize(&data[0..s1])?);
+        self.name = strings_heap.get_string(&data[s1..s2])?;
+        self._type = blobs_heap.get_blob(&data[s2..s3])?;
+        Ok(())
     }
 }
 
@@ -1646,7 +1709,7 @@ impl MDTableRowTrait for MaxTable{
 }
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct MetaDataTable{
     number: usize,
     is_sorted: bool,

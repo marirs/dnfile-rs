@@ -39,6 +39,54 @@ pub trait CodedIndex{
 }
 
 #[derive(Debug, Clone)]
+pub struct SimpleCodedIndex{
+    pub tag_bits: usize,
+    pub table_names: Vec<&'static str>,
+    pub row_index: usize,
+    pub table: String
+}
+
+impl SimpleCodedIndex{
+    pub fn new(table_names: Vec<&'static str>, tag_bits: usize, value: &[u8], tables: &std::collections::BTreeMap<usize, super::MetaDataTable>) -> Result<SimpleCodedIndex>{
+        let mut res = SimpleCodedIndex{
+            tag_bits,
+            table_names,
+            row_index: 0,
+            table: "".to_string()
+        };
+        res.set(value, tables)?;
+        Ok(res)
+    }
+}
+
+impl CodedIndex for SimpleCodedIndex{
+    fn set_row_index(&mut self, value: usize){
+        self.row_index = value;
+    }
+    fn set_table(&mut self, value: String){
+        self.table = value;
+    }
+    fn get_table_name(&self, index: usize) -> Result<&'static str>{
+        Ok(self.table_names[index])
+    }
+    fn get_tag_bits(&self) -> usize{
+        self.tag_bits
+    }
+}
+
+impl Default for SimpleCodedIndex{
+    fn default() -> Self{
+        Self{
+            tag_bits: 0,
+            table_names: vec![],
+            row_index: 0,
+            table: "".to_string()
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
 pub struct ResolutionScope{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,

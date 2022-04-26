@@ -10,10 +10,12 @@ const EXTRA_DATA_MASK: u8 = 0x40;
 const HAS_DELETE_MASK: u32 = 0x80;
 const MAX_TABLES: usize = 64;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct MetaDataTable{
+    #[serde(skip_serializing)]
     data: Vec<u8>,
     rva: u32,
+    pub tables: std::collections::BTreeMap<usize, mdtables::MetaDataTable>
 }
 
 impl crate::DnPe<'_>{
@@ -28,7 +30,8 @@ impl crate::DnPe<'_>{
 
         Ok(super::Stream::MetaDataTables(MetaDataTable{
             data: stream_data,
-            rva: metadata_rva+stream_offset
+            rva: metadata_rva+stream_offset,
+            tables: std::collections::BTreeMap::new()
         }))
     }
 

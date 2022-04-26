@@ -1,4 +1,4 @@
-use serde::{Deserialize};
+use serde::{Deserialize, Serialize};
 
 mod error;
 pub mod stream;
@@ -6,10 +6,12 @@ pub mod utils;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct DnPe<'a>{
     name: String,
+    #[serde(skip_serializing)]
     pe: goblin::pe::PE<'a>,
+    #[serde(skip_serializing)]
     data: Vec<u8>,
     net: Option<ClrData>
 }
@@ -151,8 +153,9 @@ pub struct ClrStruct{
     managed_native_header_size: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct ClrData{
+    #[serde(skip_serializing)]
     clr_struct: ClrStruct,
     metadata: MetaData,
 //    strings: Option<StringsHeap>,
@@ -176,8 +179,9 @@ pub struct MetaDataStruct{
 //    number_of_streams: u32
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct MetaData{
+    #[serde(skip_serializing)]
     metadata_struct: MetaDataStruct,
     version: String,
     flags: u16,

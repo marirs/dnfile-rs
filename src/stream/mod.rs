@@ -7,7 +7,7 @@ pub mod blob_heap;
 pub mod guid_heap;
 pub mod user_string_heap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum Stream{
     GenericStream(generic_stream::GenericStream),
     MetaDataTables(meta_data_tables::MetaDataTable),
@@ -17,7 +17,7 @@ pub enum Stream{
     UserStringHeap(user_string_heap::UserStringHeap)
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct ClrStream{
     pub name: String,
     pub rva: u32,
@@ -89,7 +89,7 @@ impl crate::DnPe<'_>{
         let mut res = stream.clone();
         match &mut res.stream{
             Stream::MetaDataTables(m) => {
-                self.parse_meta_data_tables(m, stream_map)?;
+                m.tables = self.parse_meta_data_tables(m, stream_map)?;
             },
             Stream::GenericStream(_) => {},
             Stream::StringHeap(_) => {},

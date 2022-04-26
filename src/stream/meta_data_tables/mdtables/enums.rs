@@ -247,7 +247,84 @@ impl ClrTypeAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrFieldAttr{}
+pub enum CorFieldAccess{
+    PrivateScope,
+    Private,
+    FamANDAssem,
+    Assembly,
+    Family,
+    FamORAssem,
+    Public,
+    Unknown1
+}
+
+impl CorFieldAccess{
+    pub fn new(value: usize) -> Self{
+        match value & 7{
+            1 => Self::Private,
+            2 => Self::FamANDAssem,
+            3 => Self::Assembly,
+            4 => Self::Family,
+            5 => Self::FamORAssem,
+            6 => Self::Public,
+            7 => Self::Unknown1,
+            _ => Self::PrivateScope
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum ClrFieldAttr{
+    FieldAccess(CorFieldAccess),
+    Static,
+    InitOnly,
+    Literal,
+    NotSerialized,
+    SpecialName,
+    PinvokeImpl,
+    RTSpecialName,
+    HasFieldMarshal,
+    HasDefault,
+    HasFieldRVA
+}
+
+impl ClrFieldAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        res.push(Self::FieldAccess(CorFieldAccess::new(value)));
+        if value & 0x10 != 0{
+            res.push(Self::Static);
+        }
+        if value & 0x20 != 0{
+            res.push(Self::InitOnly);
+        }
+        if value & 0x40 != 0{
+            res.push(Self::Literal);
+        }
+        if value & 0x80 != 0{
+            res.push(Self::NotSerialized);
+        }
+        if value & 0x200 != 0{
+            res.push(Self::SpecialName);
+        }
+        if value & 0x2000 != 0{
+            res.push(Self::PinvokeImpl);
+        }
+        if value & 0x100 != 0{
+            res.push(Self::HasFieldRVA);
+        }
+        if value & 0x400 != 0{
+            res.push(Self::RTSpecialName);
+        }
+        if value & 0x1000 != 0{
+            res.push(Self::HasFieldMarshal);
+        }
+        if value & 0x8000 != 0{
+            res.push(Self::HasDefault);
+        }
+        res
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum CorMethodMemberAccess{
@@ -402,7 +479,28 @@ impl ClrParamAttr{
 pub enum ClrEventAttr{}
 
 #[derive(Debug, Clone)]
-pub enum ClrPropertyAttr{}
+pub enum ClrPropertyAttr{
+    SpecialName,
+    RTSpecialName,
+    HasDefault
+}
+
+impl ClrPropertyAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 0x200 != 0{
+            res.push(Self::SpecialName);
+        }
+        if value & 0x400 != 0{
+            res.push(Self::RTSpecialName);
+        }
+        if value & 0x1000 != 0{
+            res.push(Self::HasDefault);
+        }
+        res
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub enum ClrMethodSemanticsAttr{}

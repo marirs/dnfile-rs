@@ -1,7 +1,8 @@
 use crate::Result;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct StringHeap{
+    #[serde(skip_serializing)]
     data: Vec<u8>
 }
 
