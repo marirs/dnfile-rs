@@ -5,9 +5,9 @@ pub mod mdtables;
 const STRINGS_MASK: u8 = 0x01;
 const GUIDS_MASK: u8 = 0x02;
 const BLOBS_MASK: u8 = 0x04;
-const DELTA_ONLY_MASK: u32 = 0x20;
+const _DELTA_ONLY_MASK: u32 = 0x20;
 const EXTRA_DATA_MASK: u8 = 0x40;
-const HAS_DELETE_MASK: u32 = 0x80;
+const _HAS_DELETE_MASK: u32 = 0x80;
 const MAX_TABLES: usize = 64;
 
 #[derive(Debug, Clone, serde::Serialize)]

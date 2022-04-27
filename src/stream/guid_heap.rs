@@ -10,8 +10,11 @@ pub struct GuidHeap{
 impl GuidHeap{
     pub fn get(&self, index: usize) -> Result<uuid::Uuid>{
         let size = 16;
+        if index < 1{
+            return Ok(uuid::Uuid::default());
+        }
         let offset = (index - 1) * size;
-        if offset+size >= self.data.len(){
+        if offset+size > self.data.len(){
             return Err(crate::error::Error::GuidHeapReadOutOfBound(index, self.data.len()));
         }
         let guid_buf = &self.data[offset .. offset + size];
@@ -21,10 +24,10 @@ impl GuidHeap{
 
 impl crate::DnPe<'_>{
     pub fn new_guid_heap(&self,
-                         metadata_rva: &u32,
-                         stream_offset: &u32,
-                         stream_size: &usize,
-                         stream_name: &str,
+                         _metadata_rva: &u32,
+                         _stream_offset: &u32,
+                         _stream_size: &usize,
+                         _stream_name: &str,
                          stream_data: Vec<u8>) -> Result<super::Stream>{
         Ok(super::Stream::GuidHeap(GuidHeap{
             data: stream_data

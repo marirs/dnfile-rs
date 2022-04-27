@@ -476,7 +476,24 @@ impl ClrParamAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrEventAttr{}
+pub enum ClrEventAttr{
+    SpecialName,
+    RTSpecialName
+}
+
+impl ClrEventAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 0x200 != 0{
+            res.push(Self::SpecialName);
+        }
+        if value & 0x400 != 0{
+            res.push(Self::RTSpecialName);
+        }
+        res
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub enum ClrPropertyAttr{
@@ -735,10 +752,114 @@ impl ClrAssemblyFlags{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrFileFlags{}
+pub enum ClrFileFlags{
+    ContainsMetaData,
+    ContainsNoMetaData
+}
+
+impl ClrFileFlags{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        if value & 1 != 0{
+            res.push(Self::ContainsNoMetaData);
+        } else {
+            res.push(Self::ContainsMetaData);
+        }
+        res
+    }
+}
 
 #[derive(Debug, Clone)]
-pub enum ClrManifestResourceFlags{}
+pub enum CorManifestResourceVisibility{
+    None,
+    Public,
+    Private,
+    Unknown1,
+    Unknown2,
+    Unknown3,
+    Unknown4,
+    Unknown5
+}
+
+impl CorManifestResourceVisibility{
+    pub fn new(value: usize) -> Self{
+        match  value & 7{
+            1 => Self::Public,
+            2 => Self::Private,
+            3 => Self::Unknown1,
+            4 => Self::Unknown2,
+            5 => Self::Unknown3,
+            6 => Self::Unknown4,
+            7 => Self::Unknown5,
+            _ => Self::None
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
-pub enum ClrGenericParamAttr{}
+pub enum ClrManifestResourceFlags{
+    Visibility(CorManifestResourceVisibility)
+}
+
+impl ClrManifestResourceFlags{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        res.push(Self::Visibility(CorManifestResourceVisibility::new(value)));
+        res
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum CorGenericParamVariance{
+    NonVariant,
+    Covariant,
+    Contravariant,
+    Unknown1
+}
+
+impl CorGenericParamVariance{
+    pub fn new(value: usize) -> Self{
+        match  value & 3{
+            1 => Self::Covariant,
+            2 => Self::Contravariant,
+            3 => Self::Unknown1,
+            _ => Self::NonVariant
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub enum CorGenericParamSpecialConstraint{
+    NoSpecialConstraint,
+    ReferenceTypeConstraint,
+    NotNullableValueTypeConstraint,
+    DefaultConstructorConstraint
+}
+
+impl CorGenericParamSpecialConstraint{
+    pub fn new(value: usize) -> Self{
+        match  value & 0x1c{
+            4 => Self::ReferenceTypeConstraint,
+            8 => Self::NotNullableValueTypeConstraint,
+            0x10 => Self::DefaultConstructorConstraint,
+            _ => Self::NoSpecialConstraint
+        }
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub enum ClrGenericParamAttr{
+    Variance(CorGenericParamVariance),
+    SpecialConstraint(CorGenericParamSpecialConstraint)
+}
+
+impl ClrGenericParamAttr{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        res.push(Self::Variance(CorGenericParamVariance::new(value)));
+        res.push(Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value)));
+        res
+    }
+}
