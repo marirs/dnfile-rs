@@ -1167,7 +1167,7 @@ impl MDTableRowTrait for ImplMap{
 #[derive(Debug, Clone, Default)]
 pub struct FieldRva{
     rva: u32,
-    field: Field
+    field: codedindex::SimpleCodedIndex //Field
 }
 
 impl MDTableRowTrait for FieldRva{
@@ -1178,16 +1178,20 @@ impl MDTableRowTrait for FieldRva{
 
     fn parse(&mut self,
              data: &Vec<u8>,
-             str_offset_size: usize,
-             guids_offset_size: usize,
-             blobs_offset_size: usize,
+             _str_offset_size: usize,
+             _guids_offset_size: usize,
+             _blobs_offset_size: usize,
              tables_row_counts: &Vec<usize>,
              tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-             next_row: Option<&dyn MDTableRowTrait>,
-             strings_heap: &Option<&crate::stream::ClrStream>,
-             blobss_heap: &Option<&crate::stream::ClrStream>,
-             guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
-        unimplemented!()
+             _next_row: Option<&dyn MDTableRowTrait>,
+             _strings_heap: &Option<&crate::stream::ClrStream>,
+             _blobss_heap: &Option<&crate::stream::ClrStream>,
+             _guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>{
+        let s1 = 4;
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
+        self.rva = crate::utils::read_usize(&data[0..s1])? as u32;
+        self.field = codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[s1..s2], tables)?;
+        Ok(())
     }
 }
 

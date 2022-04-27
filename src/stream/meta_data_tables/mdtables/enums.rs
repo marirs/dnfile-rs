@@ -545,12 +545,34 @@ pub enum CorPinvokeMapCharSet{
     Auto
 }
 
+impl CorPinvokeMapCharSet{
+    pub fn new(value: usize) -> Self{
+        match value & 6{
+            2 => Self::Ansi,
+            4 => Self::Unicode,
+            6 => Self::Auto,
+            _ => Self::NotSpec
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum  CorPinvokeBestFit{
     UseAssem,
     Enabled,
     Disabled
 }
+
+impl CorPinvokeBestFit{
+    pub fn new(value: usize) -> Self{
+        match value & 0x30{
+            0x10 => Self::Enabled,
+            0x20 => Self::Disabled,
+            _ => Self::UseAssem
+        }
+    }
+}
+
 
 #[derive(Debug, Clone)]
 pub enum CorPinvokeThrowOnUnmappableChar{
@@ -559,8 +581,19 @@ pub enum CorPinvokeThrowOnUnmappableChar{
     Disabled
 }
 
+impl CorPinvokeThrowOnUnmappableChar{
+    pub fn new(value: usize) -> Self{
+        match value & 0x3000{
+            0x1000 => Self::Enabled,
+            0x2000 => Self::Disabled,
+            _ => Self::UseAssem
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum CorPinvokeCallConv{
+    None,
     Winapi,
     Cdecl,
     Stdcall,
@@ -568,6 +601,21 @@ pub enum CorPinvokeCallConv{
     Fastcall,
     Unknown1,
     Unknown2
+}
+
+impl CorPinvokeCallConv{
+    pub fn new(value: usize) -> Self{
+        match value & 0x700{
+            0x100 => Self::Winapi,
+            0x200 => Self::Cdecl,
+            0x300 => Self::Stdcall,
+            0x400 => Self::Thiscall,
+            0x500 => Self::Fastcall,
+            0x600 => Self::Unknown1,
+            0x700 => Self::Unknown2,
+            _ => Self::None
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -578,6 +626,23 @@ pub enum ClrPinvokeMap{
     CallConv(CorPinvokeCallConv),
     NoMangle,
     SupportsLastError
+}
+
+impl ClrPinvokeMap{
+    pub fn new(value: usize) -> Vec<Self>{
+        let mut res = vec![];
+        res.push(Self::CharSet(CorPinvokeMapCharSet::new(value)));
+        res.push(Self::BestFit(CorPinvokeBestFit::new(value)));
+        res.push(Self::ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar::new(value)));
+        res.push(Self::CallConv(CorPinvokeCallConv::new(value)));
+        if value & 1 != 0{
+            res.push(Self::NoMangle);
+        }
+        if value & 0x40 != 0{
+            res.push(Self::SupportsLastError);
+        }
+        res
+    }
 }
 
 #[derive(Debug, Clone)]
