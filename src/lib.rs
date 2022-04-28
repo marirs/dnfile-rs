@@ -67,7 +67,7 @@ impl DnPe<'_> {
             &pe::options::ParseOptions { resolve_rva: true },
         ) {
             Some(s) => Ok(s),
-            None => Err(Error::UnresolvedRvaError(rva)),
+            None => Err(Error::UnresolvedRva(rva)),
         }
     }
 

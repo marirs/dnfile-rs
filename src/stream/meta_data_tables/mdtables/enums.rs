@@ -234,7 +234,7 @@ pub struct ClrTypeAttr {
 impl ClrTypeAttr {
     pub fn set(&mut self, data: &[u8]) -> Result<()> {
         if data.len() != 4 {
-            return Err(crate::error::Error::FormatError(format!(
+            return Err(crate::error::Error::FormatErr(format!(
                 "CtrlTypeAttr incorrect size {} {}",
                 data.len(),
                 4
