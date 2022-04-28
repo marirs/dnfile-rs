@@ -1,5 +1,5 @@
+use goblin::{pe, Object};
 use serde::{Deserialize, Serialize};
-use goblin::{Object, pe};
 
 pub mod stream;
 pub mod utils;
@@ -32,19 +32,11 @@ impl DnPe<'_> {
         };
         let opt_header = match &res.pe.header.optional_header {
             Some(oh) => oh,
-            None => {
-                return Err(Error::UnsupportedBinaryFormat(
-                    "optional header absence",
-                ))
-            }
+            None => return Err(Error::UnsupportedBinaryFormat("optional header absence")),
         };
         let clr_directory = match opt_header.data_directories.get_clr_runtime_header() {
             Some(oh) => oh,
-            None => {
-                return Err(Error::UnsupportedBinaryFormat(
-                    "ClR runtime header absence",
-                ))
-            }
+            None => return Err(Error::UnsupportedBinaryFormat("ClR runtime header absence")),
         };
         let clr_struct: ClrStruct = res.get_data(
             &clr_directory.virtual_address,
@@ -133,10 +125,8 @@ impl DnPe<'_> {
         let version = self.data
             [version_offset..version_offset + metadata_struct.version_length as usize]
             .to_vec();
-        let flags: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length),
-            &2,
-        )?;
+        let flags: u16 =
+            self.get_data(&(metadata_rva + 16 + metadata_struct.version_length), &2)?;
         let number_of_streams: u16 = self.get_data(
             &(metadata_rva + 16 + metadata_struct.version_length + 2),
             &2,

@@ -1,4 +1,4 @@
-use crate::{Result, error::Error};
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone)]
 pub enum CorTypeVisibility {
@@ -443,7 +443,7 @@ impl ClrMethodAttr {
         vec![
             Self::MemberAccess(CorMethodMemberAccess::new(value)),
             Self::AttrFlag(CorMethodAttrFlag::new(value)),
-            Self::VtableLayout(CorMethodVtableLayout::new(value))
+            Self::VtableLayout(CorMethodVtableLayout::new(value)),
         ]
     }
 }
@@ -652,7 +652,7 @@ impl ClrPinvokeMap {
             Self::CharSet(CorPinvokeMapCharSet::new(value)),
             Self::BestFit(CorPinvokeBestFit::new(value)),
             Self::ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar::new(value)),
-            Self::CallConv(CorPinvokeCallConv::new(value))
+            Self::CallConv(CorPinvokeCallConv::new(value)),
         ];
         if value & 1 != 0 {
             res.push(Self::NoMangle);
@@ -857,7 +857,7 @@ impl ClrGenericParamAttr {
     pub fn new(value: usize) -> Vec<Self> {
         vec![
             Self::Variance(CorGenericParamVariance::new(value)),
-            Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value))
+            Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value)),
         ]
     }
 }

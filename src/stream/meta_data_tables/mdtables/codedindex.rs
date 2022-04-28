@@ -1,4 +1,4 @@
-use crate::{Result, error::Error};
+use crate::{error::Error, Result};
 
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,
@@ -42,9 +42,7 @@ pub trait CodedIndex {
             self.set_table(table_name.to_string());
             return Ok(());
         }
-        Err(Error::CodedIndexWithUndefinedTable(
-            table_name.to_string(),
-        ))
+        Err(Error::CodedIndexWithUndefinedTable(table_name.to_string()))
     }
 }
 
