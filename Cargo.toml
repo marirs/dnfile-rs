@@ -22,3 +22,10 @@ uuid = "0.8"
 [lib]
 name = "dnfile"
 path = "src/lib.rs"
+
+[profile.release]
+codegen-units = 1
+debug-assertions = false
+debug = false
+opt-level = 3
+lto = true
