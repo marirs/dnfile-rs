@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
+use goblin::{Object, pe};
 
-mod error;
 pub mod stream;
 pub mod utils;
 
+mod error;
+use crate::error::Error;
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 #[derive(Debug, Serialize)]
@@ -18,9 +20,9 @@ pub struct DnPe<'a> {
 
 impl DnPe<'_> {
     pub fn new<'a>(name: &'a str, data: &'a [u8]) -> Result<DnPe<'a>> {
-        let pe = match goblin::Object::parse(&data)? {
-            goblin::Object::PE(pe) => pe,
-            _ => return Err(error::Error::UnsupportedBinaryFormat("main")),
+        let pe = match Object::parse(data)? {
+            Object::PE(pe) => pe,
+            _ => return Err(Error::UnsupportedBinaryFormat("main")),
         };
         let mut res = DnPe {
             pe,
@@ -31,7 +33,7 @@ impl DnPe<'_> {
         let opt_header = match &res.pe.header.optional_header {
             Some(oh) => oh,
             None => {
-                return Err(error::Error::UnsupportedBinaryFormat(
+                return Err(Error::UnsupportedBinaryFormat(
                     "optional header absence",
                 ))
             }
@@ -39,7 +41,7 @@ impl DnPe<'_> {
         let clr_directory = match opt_header.data_directories.get_clr_runtime_header() {
             Some(oh) => oh,
             None => {
-                return Err(error::Error::UnsupportedBinaryFormat(
+                return Err(Error::UnsupportedBinaryFormat(
                     "ClR runtime header absence",
                 ))
             }
@@ -62,10 +64,10 @@ impl DnPe<'_> {
                 .unwrap()
                 .windows_fields
                 .file_alignment,
-            &goblin::pe::options::ParseOptions { resolve_rva: true },
+            &pe::options::ParseOptions { resolve_rva: true },
         ) {
             Some(s) => Ok(s),
-            None => return Err(crate::error::Error::UnresolvedRvaError(rva)),
+            None => Err(Error::UnresolvedRvaError(rva)),
         }
     }
 
@@ -76,7 +78,7 @@ impl DnPe<'_> {
         Ok(goblin::pe::utils::get_data(
             &self.data,
             &self.pe.sections,
-            goblin::pe::data_directories::DataDirectory {
+            pe::data_directories::DataDirectory {
                 virtual_address: *rva,
                 size: *size as u32,
             },
@@ -129,17 +131,17 @@ impl DnPe<'_> {
     ) -> Result<MetaData> {
         let version_offset = self.offset(metadata_rva + 16)?;
         let version = self.data
-            [version_offset..version_offset + metadata_struct.version_length.clone() as usize]
+            [version_offset..version_offset + metadata_struct.version_length as usize]
             .to_vec();
         let flags: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length.clone()),
+            &(metadata_rva + 16 + metadata_struct.version_length),
             &2,
         )?;
         let number_of_streams: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length.clone() + 2),
+            &(metadata_rva + 16 + metadata_struct.version_length + 2),
             &2,
         )?;
-        let struct_size = 16 + metadata_struct.version_length.clone() + 2 + 2;
+        let struct_size = 16 + metadata_struct.version_length + 2 + 2;
         let mut streams = std::collections::HashMap::new();
         if number_of_streams > 0 {
             let streams_table_rva = metadata_rva + struct_size;
