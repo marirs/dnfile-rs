@@ -2,8 +2,8 @@ use crate::Result;
 
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,
-    table_names: &Vec<&'static str>,
-    tables_row_counts: &Vec<usize>,
+    table_names: &[&'static str],
+    tables_row_counts: &[usize],
 ) -> usize {
     let mut max_index = 0;
     for name in table_names {
