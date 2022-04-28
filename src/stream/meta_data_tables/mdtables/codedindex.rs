@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Result, error::Error};
 
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,
@@ -35,14 +35,14 @@ pub trait CodedIndex {
         let value = crate::utils::read_usize(value)?;
         let table_name = self.get_table_name(value & ((1 << self.get_tag_bits()) - 1))?;
         self.set_row_index(value >> self.get_tag_bits());
-        for (_, t) in tables {
+        for t in tables.values() {
             if t.table.name() != table_name {
                 continue;
             }
             self.set_table(table_name.to_string());
             return Ok(());
         }
-        Err(crate::error::Error::CodedIndexWithUndefinedTable(
+        Err(Error::CodedIndexWithUndefinedTable(
             table_name.to_string(),
         ))
     }

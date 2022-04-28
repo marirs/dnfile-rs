@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Result, error::Error};
 
 #[derive(Debug, Clone)]
 pub enum CorTypeVisibility {
@@ -234,7 +234,7 @@ pub struct ClrTypeAttr {
 impl ClrTypeAttr {
     pub fn set(&mut self, data: &[u8]) -> Result<()> {
         if data.len() != 4 {
-            return Err(crate::error::Error::FormatErr(format!(
+            return Err(Error::FormatErr(format!(
                 "CtrlTypeAttr incorrect size {} {}",
                 data.len(),
                 4
@@ -294,8 +294,8 @@ pub enum ClrFieldAttr {
 
 impl ClrFieldAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::FieldAccess(CorFieldAccess::new(value)));
+        let mut res = vec![Self::FieldAccess(CorFieldAccess::new(value))];
+
         if value & 0x10 != 0 {
             res.push(Self::Static);
         }
@@ -440,11 +440,11 @@ pub enum ClrMethodAttr {
 
 impl ClrMethodAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::MemberAccess(CorMethodMemberAccess::new(value)));
-        res.push(Self::AttrFlag(CorMethodAttrFlag::new(value)));
-        res.push(Self::VtableLayout(CorMethodVtableLayout::new(value)));
-        res
+        vec![
+            Self::MemberAccess(CorMethodMemberAccess::new(value)),
+            Self::AttrFlag(CorMethodAttrFlag::new(value)),
+            Self::VtableLayout(CorMethodVtableLayout::new(value))
+        ]
     }
 }
 
@@ -648,13 +648,12 @@ pub enum ClrPinvokeMap {
 
 impl ClrPinvokeMap {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::CharSet(CorPinvokeMapCharSet::new(value)));
-        res.push(Self::BestFit(CorPinvokeBestFit::new(value)));
-        res.push(Self::ThrowOnUnmappableChar(
-            CorPinvokeThrowOnUnmappableChar::new(value),
-        ));
-        res.push(Self::CallConv(CorPinvokeCallConv::new(value)));
+        let mut res = vec![
+            Self::CharSet(CorPinvokeMapCharSet::new(value)),
+            Self::BestFit(CorPinvokeBestFit::new(value)),
+            Self::ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar::new(value)),
+            Self::CallConv(CorPinvokeCallConv::new(value))
+        ];
         if value & 1 != 0 {
             res.push(Self::NoMangle);
         }
@@ -806,9 +805,7 @@ pub enum ClrManifestResourceFlags {
 
 impl ClrManifestResourceFlags {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::Visibility(CorManifestResourceVisibility::new(value)));
-        res
+        vec![Self::Visibility(CorManifestResourceVisibility::new(value))]
     }
 }
 
@@ -858,11 +855,9 @@ pub enum ClrGenericParamAttr {
 
 impl ClrGenericParamAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::Variance(CorGenericParamVariance::new(value)));
-        res.push(Self::SpecialConstraint(
-            CorGenericParamSpecialConstraint::new(value),
-        ));
-        res
+        vec![
+            Self::Variance(CorGenericParamVariance::new(value)),
+            Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value))
+        ]
     }
 }
