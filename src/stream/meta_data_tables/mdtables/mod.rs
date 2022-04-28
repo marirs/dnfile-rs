@@ -586,7 +586,7 @@ impl MDTableRowTrait for MethodDef {
 
     fn parse(
         &mut self,
-        data:&[u8],
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1060,7 +1060,7 @@ impl MDTableRowTrait for ClassLayout {
 
     fn parse(
         &mut self,
-        data: &[u8] ,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
