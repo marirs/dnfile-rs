@@ -1,4 +1,7 @@
-target
-tests
+.idea/
+.vscode/
+
+tests/
+target/
 Cargo.lock
-1
+
