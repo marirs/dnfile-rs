@@ -128,6 +128,7 @@ pub trait MDTableRowTrait{
              strings_heap: &Option<&crate::stream::ClrStream>,
              blobss_heap: &Option<&crate::stream::ClrStream>,
              guids_heap: &Option<&crate::stream::ClrStream>) -> Result<()>;
+        fn as_any(&self) -> &dyn std::any::Any;
 }
 
 pub trait MDTableRowTraitT{
@@ -222,6 +223,10 @@ pub struct Module{
 }
 
 impl MDTableRowTrait for Module{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         2 + str_offset_size + 3*guids_offset_size
     }
@@ -255,12 +260,16 @@ impl MDTableRowTrait for Module{
 
 #[derive(Debug, Clone, Default)]
 pub struct TypeRef{
-    resolution_scope: codedindex::ResolutionScope,
-    type_name: String,
-    type_namespace: String
+    pub resolution_scope: codedindex::ResolutionScope,
+    pub type_name: String,
+    pub type_namespace: String
 }
 
 impl MDTableRowTrait for TypeRef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(self.resolution_scope.tag_bits, &self.resolution_scope.table_names, tables_row_counts)
             + 2*str_offset_size
@@ -297,6 +306,10 @@ pub struct TypeDef{
 }
 
 impl MDTableRowTrait for TypeDef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + 2*str_offset_size
@@ -340,6 +353,10 @@ pub struct FieldPtr{
 }
 
 impl MDTableRowTrait for FieldPtr{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
@@ -369,6 +386,10 @@ pub struct Field{
 }
 
 impl MDTableRowTrait for Field{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         2
             + str_offset_size
@@ -405,6 +426,10 @@ pub struct MethodPtr{
 }
 
 impl MDTableRowTrait for MethodPtr{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
     }
@@ -438,6 +463,10 @@ pub struct MethodDef{
 }
 
 impl MDTableRowTrait for MethodDef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + 2
@@ -483,6 +512,10 @@ pub struct ParamPtr{
 }
 
 impl MDTableRowTrait for ParamPtr{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts)
     }
@@ -513,6 +546,10 @@ pub struct Param{
 }
 
 impl MDTableRowTrait for Param{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         2
             + 2
@@ -549,6 +586,10 @@ pub struct InterfaceImpl{
 }
 
 impl MDTableRowTrait for InterfaceImpl{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(self.interface.tag_bits, &self.interface.table_names, tables_row_counts)
@@ -576,12 +617,16 @@ impl MDTableRowTrait for InterfaceImpl{
 
 #[derive(Debug, Clone, Default)]
 pub struct MemberRef{
-    class: codedindex::MemberRefParent,
-    name: String,
-    signature: Vec<u8>
+    pub class: codedindex::MemberRefParent,
+    pub name: String,
+    pub signature: Vec<u8>
 }
 
 impl MDTableRowTrait for MemberRef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(self.class.tag_bits, &self.class.table_names, tables_row_counts)
             + str_offset_size
@@ -620,6 +665,10 @@ pub struct Constant{
 }
 
 impl MDTableRowTrait for Constant{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         1
             + 1
@@ -659,6 +708,10 @@ pub struct CustomAttribute{
 }
 
 impl MDTableRowTrait for CustomAttribute{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
             + codedindex::clr_coded_index_struct_size(self._type.tag_bits, &self._type.table_names, tables_row_counts)
@@ -693,6 +746,10 @@ pub struct FieldMarshal{
 }
 
 impl MDTableRowTrait for FieldMarshal{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
             + blobs_offset_size
@@ -726,6 +783,10 @@ pub struct DeclSecurity{
 }
 
 impl MDTableRowTrait for DeclSecurity{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + codedindex::clr_coded_index_struct_size(self.parent.tag_bits, &self.parent.table_names, tables_row_counts)
@@ -763,6 +824,10 @@ pub struct ClassLayout{
 }
 
 impl MDTableRowTrait for ClassLayout{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + 4
@@ -797,6 +862,10 @@ pub struct FieldLayout{
 }
 
 impl MDTableRowTrait for FieldLayout{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
@@ -827,6 +896,10 @@ pub struct StandAloneSig{
 }
 
 impl MDTableRowTrait for StandAloneSig{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         blobs_offset_size
     }
@@ -856,6 +929,10 @@ pub struct EventMap{
 }
 
 impl MDTableRowTrait for EventMap{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Event"], tables_row_counts)
@@ -884,6 +961,10 @@ impl MDTableRowTrait for EventMap{
 pub struct EventPtr{}
 
 impl MDTableRowTrait for EventPtr{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         0
     }
@@ -911,6 +992,10 @@ pub struct Event{
 }
 
 impl MDTableRowTrait for Event{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + str_offset_size
@@ -946,6 +1031,10 @@ pub struct PropertyMap{
 }
 
 impl MDTableRowTrait for PropertyMap{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Property"], tables_row_counts)
@@ -974,6 +1063,10 @@ impl MDTableRowTrait for PropertyMap{
 pub struct PropertyPtr{}
 
 impl MDTableRowTrait for PropertyPtr{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         0
     }
@@ -1001,6 +1094,10 @@ pub struct Property{
 }
 
 impl MDTableRowTrait for Property{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         2
             + str_offset_size
@@ -1039,6 +1136,10 @@ pub struct MethodSemantics{
 }
 
 impl MDTableRowTrait for MethodSemantics{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
@@ -1075,6 +1176,10 @@ pub struct MethodImpl{
 }
 
 impl MDTableRowTrait for MethodImpl{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(self.method_body.tag_bits, &self.method_body.table_names, tables_row_counts)
@@ -1108,6 +1213,10 @@ pub struct ModuleRef{
 }
 
 impl MDTableRowTrait for ModuleRef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         str_offset_size
     }
@@ -1136,6 +1245,10 @@ pub struct TypeSpec{
 }
 
 impl MDTableRowTrait for TypeSpec{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         blobs_offset_size
     }
@@ -1167,6 +1280,10 @@ pub struct ImplMap{
 }
 
 impl MDTableRowTrait for ImplMap{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + codedindex::clr_coded_index_struct_size(self.member_forwarded.tag_bits, &self.member_forwarded.table_names, tables_row_counts)
@@ -1205,6 +1322,10 @@ pub struct FieldRva{
 }
 
 impl MDTableRowTrait for FieldRva{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
@@ -1236,6 +1357,10 @@ pub struct EncLog{
 }
 
 impl MDTableRowTrait for EncLog{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
             + 4
@@ -1265,6 +1390,10 @@ pub struct EncMap{
     token: u32,
 }
 impl MDTableRowTrait for EncMap{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
     }
@@ -1300,6 +1429,10 @@ pub struct Assembly{
 }
 
 impl MDTableRowTrait for Assembly{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
             + 2
@@ -1353,6 +1486,10 @@ pub struct AssemblyProcessor{
 }
 
 impl MDTableRowTrait for AssemblyProcessor{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
     }
@@ -1381,6 +1518,10 @@ pub struct AssemblyOS{
     os_minor_version: u32
 }
 impl MDTableRowTrait for AssemblyOS{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
             + 4
@@ -1422,6 +1563,10 @@ pub struct AssemblyRef{
 }
 
 impl MDTableRowTrait for AssemblyRef{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         2
             + 2
@@ -1476,6 +1621,10 @@ pub struct AssemblyRefProcessor{
 }
 
 impl MDTableRowTrait for AssemblyRefProcessor{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + codedindex::clr_coded_index_struct_size(0, &vec!["AssemblyRef"], tables_row_counts)
@@ -1509,6 +1658,10 @@ pub struct AssemblyRefOS{
 }
 
 impl MDTableRowTrait for AssemblyRefOS{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + 4
@@ -1547,6 +1700,10 @@ pub struct File{
 }
 
 impl MDTableRowTrait for File{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         4
             + str_offset_size
@@ -1586,6 +1743,10 @@ pub struct ExportedType{
 }
 
 impl MDTableRowTrait for ExportedType{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + 4
@@ -1629,6 +1790,10 @@ pub struct ManifestResource{
 }
 
 impl MDTableRowTrait for ManifestResource{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         4
             + 4
@@ -1667,6 +1832,10 @@ pub struct NestedClass{
 }
 
 impl MDTableRowTrait for NestedClass{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
@@ -1700,6 +1869,10 @@ pub struct GenericParam{
 }
 
 impl MDTableRowTrait for GenericParam{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         2
             + 2
@@ -1738,6 +1911,10 @@ pub struct GenericMethod{
 }
 
 impl MDTableRowTrait for GenericMethod{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(self.unknown1.tag_bits, &self.unknown1.table_names, tables_row_counts)
             + blobs_offset_size
@@ -1770,6 +1947,10 @@ pub struct GenericParamConstraint{
 }
 
 impl MDTableRowTrait for GenericParamConstraint{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, tables_row_counts: &Vec<usize>) -> usize{
         codedindex::clr_coded_index_struct_size(0, &vec!["GenericParam"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(self.constraint.tag_bits, &self.constraint.table_names, tables_row_counts)
@@ -1798,6 +1979,10 @@ impl MDTableRowTrait for GenericParamConstraint{
 pub struct Unused{}
 
 impl MDTableRowTrait for Unused{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         0
     }
@@ -1821,6 +2006,10 @@ impl MDTableRowTrait for Unused{
 pub struct MaxTable{}
 
 impl MDTableRowTrait for MaxTable{
+    fn as_any(&self) -> &dyn std::any::Any{
+        self
+    }
+
     fn size(&self, _str_offset_size: usize, _guids_offset_size: usize, _blobs_offset_size: usize, _tables_row_counts: &Vec<usize>) -> usize{
         0
     }
@@ -1863,6 +2052,11 @@ impl MetaDataTable{
     }
     pub fn get_mut_row(&mut self, i: usize) -> Result<&mut dyn MDTableRowTraitT>{
         self.table.get_mut_row(i)
+    }
+
+    pub fn row<T>(&self, i: usize) -> Result<&T>
+    where T: MDTableRowTrait + 'static{
+        self.get_row(i)?.get_row().as_any().downcast_ref::<T>().ok_or(crate::error::Error::RowIndexOutOfBound(i, self.row_count()))
     }
 }
 

@@ -51,5 +51,5 @@ pub enum Error {
     #[error("{0}")]
     ParseGuidError(#[from] uuid::Error),
     #[error("not implemented")]
-    NoiImplementedError,
+    NotImplementedError,
 }

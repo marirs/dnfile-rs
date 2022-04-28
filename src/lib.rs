@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-mod error;
+pub mod error;
 pub mod stream;
 pub mod utils;
 
@@ -10,13 +10,20 @@ pub type Result<T> = std::result::Result<T, error::Error>;
 pub struct DnPe<'a>{
     name: String,
     #[serde(skip_serializing)]
-    pe: goblin::pe::PE<'a>,
+    pub pe: goblin::pe::PE<'a>,
     #[serde(skip_serializing)]
     data: Vec<u8>,
     net: Option<ClrData>
 }
 
 impl DnPe<'_>{
+    pub fn net(&self) -> Result<&ClrData>{
+        match &self.net{
+            Some(s) => Ok(s),
+            None => Err(crate::error::Error::NotImplementedError)
+        }
+    }
+
     pub fn new<'a>(name: &'a str, data: &'a [u8]) -> Result<DnPe<'a>>{
         let pe = match goblin::Object::parse(&data)?{
             goblin::Object::PE(pe) => pe,
@@ -25,7 +32,7 @@ impl DnPe<'_>{
         let mut res = DnPe{
             pe,
             name: name.to_string(),
-            data: data.to_vec(),
+            data: data.to_vec().clone(),
             net: None
         };
         let opt_header = match &res.pe.header.optional_header{
@@ -80,9 +87,11 @@ impl DnPe<'_>{
     fn new_clrdata(&self, clr_struct: ClrStruct) -> Result<ClrData>{
         let metadata_struct: MetaDataStruct = self.get_data(&clr_struct.meta_data_rva, &(clr_struct.meta_data_size as usize))?;
         let metadata = self.new_metadata(&clr_struct.meta_data_rva, metadata_struct)?;
+        let flags = ClrHeaderFlags::new(clr_struct.flags as usize);
         Ok(ClrData{
             clr_struct,
-            metadata
+            metadata,
+            flags
         })
     }
 
@@ -153,17 +162,68 @@ pub struct ClrStruct{
     managed_native_header_size: u32,
 }
 
+#[derive(Debug, Serialize, PartialOrd, Ord, PartialEq, Eq)]
+pub enum ClrHeaderFlags{
+    IlOnly,
+    BitRequired32,
+    IlLibrary,
+    StrongNamesSigned,
+    NativeEntryPiont,
+    TrackDebugData,
+    Prefer32Bit
+}
+
+impl ClrHeaderFlags{
+    pub fn new(value: usize) -> std::collections::BTreeSet<Self>{
+        let mut res = std::collections::BTreeSet::new();
+        if value & 1 != 0 {
+            res.insert(Self::IlOnly);
+        }
+        if value & 2 != 0 {
+            res.insert(Self::BitRequired32);
+        }
+        if value & 4 != 0 {
+            res.insert(Self::IlLibrary);
+        }
+        if value & 8 != 0 {
+            res.insert(Self::StrongNamesSigned);
+        }
+        if value & 0x10 != 0 {
+            res.insert(Self::NativeEntryPiont);
+        }
+        if value & 0x10000 != 0 {
+            res.insert(Self::TrackDebugData);
+        }
+        if value & 0x20000 != 0 {
+            res.insert(Self::Prefer32Bit);
+        }
+        res
+    }
+}
+
+
 #[derive(Debug, Serialize)]
 pub struct ClrData{
     #[serde(skip_serializing)]
     clr_struct: ClrStruct,
-    metadata: MetaData,
+    pub metadata: MetaData,
 //    strings: Option<StringsHeap>,
 //    user_strings: Option<UserStringHeap>,
 //    guids: Option<GuidHeap>,
  //   blobs: Option<BlobHeap>,
 //    mdtables: Option<MetaDataTables>,
-//    flags: Option<ClrHeaderFlags>
+    pub flags: std::collections::BTreeSet<ClrHeaderFlags>
+}
+
+impl ClrData{
+    pub fn md_table(&self, name: &'static str) -> Option<&stream::meta_data_tables::mdtables::MetaDataTable>{
+        for (_, s) in &self.metadata.streams{
+            if let stream::Stream::MetaDataTables(mt) = &s.stream{
+                return mt.tables.get(&stream::meta_data_tables::mdtables::table_name_2_index(name).ok()?)
+            }
+        }
+        None
+    }
 }
 
 #[repr(C)]
@@ -185,5 +245,5 @@ pub struct MetaData{
     metadata_struct: MetaDataStruct,
     version: String,
     flags: u16,
-    streams: std::collections::HashMap<String, stream::ClrStream>
+    pub streams: std::collections::HashMap<String, stream::ClrStream>
 }
