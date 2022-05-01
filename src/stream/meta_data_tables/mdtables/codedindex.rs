@@ -20,7 +20,7 @@ pub fn clr_coded_index_struct_size(tag_bits: usize, table_names: &Vec<&'static s
 
 pub trait CodedIndex{
     fn set_row_index(&mut self, value: usize);
-    fn set_table(&mut self, value: String);
+    fn set_table(&mut self, value: &'static str);
     fn get_table_name(&self, index: usize) -> Result<&'static str>;
     fn get_tag_bits(&self) -> usize;
     fn set(&mut self, value: &[u8], tables: &std::collections::BTreeMap<usize, super::MetaDataTable>) -> Result<()>{
@@ -31,7 +31,7 @@ pub trait CodedIndex{
             if t.table.name() != table_name{
                 continue
             }
-            self.set_table(table_name.to_string());
+            self.set_table(table_name);
             return Ok(())
         }
         Err(crate::error::Error::CodedIndexWithUndefinedTable(table_name.to_string()))
@@ -98,7 +98,7 @@ impl CodedIndex for ResolutionScope{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -132,7 +132,7 @@ impl CodedIndex for TypeDefOrRef{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -166,7 +166,7 @@ impl CodedIndex for MemberRefParent{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -193,14 +193,14 @@ pub struct HasConstant{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for HasConstant{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -227,14 +227,14 @@ pub struct HasCustomAttribute{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for HasCustomAttribute{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -281,14 +281,14 @@ pub struct CustomAttributeType{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for CustomAttributeType{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -315,14 +315,14 @@ pub struct HasFieldMarshall{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for HasFieldMarshall{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -349,14 +349,14 @@ pub struct HasDeclSecurity{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for HasDeclSecurity{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -383,14 +383,14 @@ pub struct HasSemantics{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for HasSemantics{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -417,14 +417,14 @@ pub struct MethodDefOrRef{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for MethodDefOrRef{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -451,14 +451,14 @@ pub struct MemberForwarded{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for MemberForwarded{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -485,14 +485,14 @@ pub struct Implementation{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for Implementation{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{
@@ -509,7 +509,7 @@ impl Default for Implementation{
             tag_bits: 2,
             table_names: vec!["File", "AssemblyRef", "ExportedType"],
             row_index: 0,
-            table: "".to_string()
+            table: "File"
         }
     }
 }
@@ -519,14 +519,14 @@ pub struct TypeOrMethodDef{
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
     pub row_index: usize,
-    pub table: String
+    pub table: &'static str
 }
 
 impl CodedIndex for TypeOrMethodDef{
     fn set_row_index(&mut self, value: usize){
         self.row_index = value;
     }
-    fn set_table(&mut self, value: String){
+    fn set_table(&mut self, value: &'static str){
         self.table = value;
     }
     fn get_table_name(&self, index: usize) -> Result<&'static str>{

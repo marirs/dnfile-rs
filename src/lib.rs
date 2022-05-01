@@ -216,13 +216,21 @@ pub struct ClrData{
 }
 
 impl ClrData{
-    pub fn md_table(&self, name: &'static str) -> Option<&stream::meta_data_tables::mdtables::MetaDataTable>{
+    pub fn md_table(&self, name: &'static str) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable>{
         for (_, s) in &self.metadata.streams{
             if let stream::Stream::MetaDataTables(mt) = &s.stream{
-                return mt.tables.get(&stream::meta_data_tables::mdtables::table_name_2_index(name).ok()?)
+                match mt.tables.get(&stream::meta_data_tables::mdtables::table_name_2_index(name)?){
+                    Some(s) => return Ok(s),
+                    None => return Err(crate::error::Error::UndefinedMetaDataTableName(name))
+                }
             }
         }
-        None
+        Err(crate::error::Error::UndefinedMetaDataTableName(name))
+    }
+
+    pub fn resolve_coded_index<T>(index: &dyn stream::meta_data_tables::mdtables::codedindex::CodedIndex) -> Result<&T>
+    where T: stream::meta_data_tables::mdtables::MDTableRowTrait{
+
     }
 }
 
