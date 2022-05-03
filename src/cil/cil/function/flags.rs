@@ -2,7 +2,7 @@ use super::super::super::cil::enums::*;
 
 #[derive(Debug, Clone)]
 pub struct CilMethodBodyFlags{
-    flags: usize
+    pub flags: usize
 }
 
 impl CilMethodBodyFlags{

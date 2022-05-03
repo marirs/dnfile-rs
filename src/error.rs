@@ -50,6 +50,14 @@ pub enum Error {
     FormatError(String),
     #[error("{0}")]
     ParseGuidError(#[from] uuid::Error),
+    #[error("undefined operand type")]
+    UndefinedOperandType(crate::cil::cil::enums::OperandType),
+    #[error("decompile error")]
+    DecompileError,
+    #[error("{0}")]
+    ConversionError(&'static str),
+    #[error("{0}")]
+    MethodBodyFormatError(String),
     #[error("not implemented")]
     NotImplementedError,
 }

@@ -2,13 +2,13 @@ use super::super::cil::enums::*;
 
 #[derive(Debug, Clone)]
 pub struct OpCode{
-    name: &'static str,
-    value: OpCodeValue,
-    operand_type: OperandType,
-    flow_control: FlowControl,
-    op_code_type: OpCodeType,
-    stack_push: StackBehaviour,
-    stack_pop: StackBehaviour,
+    pub name: &'static str,
+    pub value: OpCodeValue,
+    pub operand_type: OperandType,
+    pub flow_control: FlowControl,
+    pub op_code_type: OpCodeType,
+    pub stack_push: StackBehaviour,
+    pub stack_pop: StackBehaviour,
 }
 
 impl OpCode{
@@ -41,8 +41,8 @@ impl OpCode{
 
 #[derive(Debug)]
 pub struct OpCodes{
-    one_byte_op_codes: Vec<OpCode>,
-    two_byte_op_codes: Vec<OpCode>
+    pub one_byte_op_codes: Vec<OpCode>,
+    pub two_byte_op_codes: Vec<OpCode>
 }
 
 impl OpCodes{

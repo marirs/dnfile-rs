@@ -6,19 +6,24 @@ pub const FAT_SIZE: usize = 24;
 
 #[derive(Debug, Default, Clone)]
 pub struct ExceptionHandler{
-    exception_type: usize,
-    try_start: Option<usize>,
-    try_end: Option<usize>,
-    filter_start: Option<usize>,
-    handler_start: Option<usize>,
-    handler_end: Option<usize>,
-    catch_type: Option<super::super::clr::token::Token>
+    pub exception_type: usize,
+    pub try_start: i32,
+    pub try_end: i32,
+    pub filter_start: i32,
+    pub handler_start: i32,
+    pub handler_end: i32,
+    pub catch_type: Option<super::super::clr::token::Token>
 }
 
 impl ExceptionHandler{
     pub fn new(exception_type: usize) -> Self{
         Self{
             exception_type,
+            try_start: -1,
+            try_end: -1,
+            filter_start: -1,
+            handler_start: -1,
+            handler_end: -1,
             ..Default::default()
         }
     }
