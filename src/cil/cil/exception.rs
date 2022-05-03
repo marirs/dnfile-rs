@@ -4,7 +4,7 @@ use super::enums::ExceptionHandlerType;
 pub const TINY_SIZE: usize = 12;
 pub const FAT_SIZE: usize = 24;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct ExceptionHandler{
     exception_type: usize,
     try_start: Option<usize>,

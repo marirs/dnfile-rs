@@ -3,6 +3,7 @@ mod flags;
 
 use super::super::clr::token::Token;
 
+#[derive(Debug, Clone)]
 pub struct Function {
     offset: u64,
     header_size: usize,

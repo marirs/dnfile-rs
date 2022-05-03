@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 pub mod error;
 pub mod stream;
 pub mod utils;
+pub mod cil;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -228,9 +229,10 @@ impl ClrData{
         Err(crate::error::Error::UndefinedMetaDataTableName(name))
     }
 
-    pub fn resolve_coded_index<T>(index: &dyn stream::meta_data_tables::mdtables::codedindex::CodedIndex) -> Result<&T>
-    where T: stream::meta_data_tables::mdtables::MDTableRowTrait{
-
+    pub fn resolve_coded_index<T>(&self, index: &dyn stream::meta_data_tables::mdtables::codedindex::CodedIndex) -> Result<&T>
+    where T: stream::meta_data_tables::mdtables::MDTableRowTrait + 'static{
+        let table = self.md_table(index.table())?;
+        Ok(table.row(index.row_index())?)
     }
 }
 

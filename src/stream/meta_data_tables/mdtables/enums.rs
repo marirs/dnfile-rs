@@ -153,7 +153,7 @@ impl Default for CorTypeStringFormat{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CorMethodCodeType{
     IL,
     Native,
@@ -172,7 +172,7 @@ impl CorMethodCodeType{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CorMethodManaged{
     Unmanaged,
     Managed
@@ -187,7 +187,7 @@ impl CorMethodManaged{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ClrMethodImpl{
     MethodCodeType(CorMethodCodeType),
     MethodManaged(CorMethodManaged),
@@ -326,7 +326,7 @@ impl ClrFieldAttr{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CorMethodMemberAccess{
     PrivateScope,
     Private,
@@ -353,7 +353,7 @@ impl CorMethodMemberAccess{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CorMethodAttrFlag{
     Static,
     Final,
@@ -412,7 +412,7 @@ impl CorMethodAttrFlag{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CorMethodVtableLayout{
     ReuseSlot,
     NewSlot
@@ -427,10 +427,10 @@ impl CorMethodVtableLayout{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ClrMethodAttr{
     MemberAccess(CorMethodMemberAccess),
-    AttrFlag(Vec<CorMethodAttrFlag>),
+    AttrFlag(CorMethodAttrFlag),
     VtableLayout(CorMethodVtableLayout)
 }
 
@@ -438,7 +438,9 @@ impl ClrMethodAttr{
     pub fn new(value: usize) -> Vec<Self>{
         let mut res = vec![];
         res.push(Self::MemberAccess(CorMethodMemberAccess::new(value)));
-        res.push(Self::AttrFlag(CorMethodAttrFlag::new(value)));
+        for f in CorMethodAttrFlag::new(value){
+            res.push(Self::AttrFlag(f));
+        }
         res.push(Self::VtableLayout(CorMethodVtableLayout::new(value)));
         res
     }

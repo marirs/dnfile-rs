@@ -1,5 +1,5 @@
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operand{
     Token(super::super::clr::token::Token),
     Local(super::super::clr::local::Local),
@@ -10,7 +10,7 @@ pub enum Operand{
     None
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Instruction{
     pub offset: usize,
     pub opcode: super::opcode::OpCode,

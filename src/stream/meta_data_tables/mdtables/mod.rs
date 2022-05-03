@@ -454,9 +454,9 @@ impl MDTableRowTrait for MethodPtr{
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodDef{
-    rva: u32,
-    impl_flags: Vec<enums::ClrMethodImpl>,
-    flags: Vec<enums::ClrMethodAttr>,
+    pub rva: u32,
+    pub impl_flags: Vec<enums::ClrMethodImpl>,
+    pub flags: Vec<enums::ClrMethodAttr>,
     name: String,
     signature: Vec<u8>,
     param_list: Vec<Param>
@@ -1273,10 +1273,10 @@ impl MDTableRowTrait for TypeSpec{
 
 #[derive(Debug, Clone, Default)]
 pub struct ImplMap{
-    mapping_flags: Vec<enums::ClrPinvokeMap>,
-    member_forwarded: codedindex::MemberForwarded,
-    import_name: String,
-    import_scope: codedindex::SimpleCodedIndex //moduleref
+    pub mapping_flags: Vec<enums::ClrPinvokeMap>,
+    pub member_forwarded: codedindex::MemberForwarded,
+    pub import_name: String,
+    pub import_scope: codedindex::SimpleCodedIndex //moduleref
 }
 
 impl MDTableRowTrait for ImplMap{
