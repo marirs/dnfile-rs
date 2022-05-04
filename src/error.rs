@@ -14,6 +14,8 @@ pub enum Error {
     UnresolvedRvaError(u32),
     #[error("{0}")]
     Utf8Error(#[from] std::string::FromUtf8Error),
+    #[error("{0}")]
+    Utf16Error(#[from] std::string::FromUtf16Error),
     #[error("undefined stream")]
     UndefinedStream,
     #[error("undefined meta data table index (0..63) {0}")]
@@ -46,6 +48,8 @@ pub enum Error {
     BlobHeapReadOutOfBound(usize, usize),
     #[error("{0} {1}")]
     GuidHeapReadOutOfBound(usize, usize),
+    #[error("{0} {1}")]
+    UserStringHeapReadOutOfBound(usize, usize),
     #[error("{0}")]
     FormatError(String),
     #[error("{0}")]
@@ -58,6 +62,8 @@ pub enum Error {
     ConversionError(&'static str),
     #[error("{0}")]
     MethodBodyFormatError(String),
+    #[error("operand not have value")]
+    OperandHasNoValue,
     #[error("not implemented")]
     NotImplementedError,
 }

@@ -123,7 +123,7 @@ impl Reader{
 
     pub fn read_inline_string(&mut self, _insn: &Instruction) -> Result<Operand>{
         let token_value = self.read_u32()? as usize;
-        Ok(Operand::Token(Token::new(token_value)))
+        Ok(Operand::StringToken(Token::new(token_value)))
     }
 
     pub fn read_inline_switch(&mut self, insn: &Instruction) -> Result<Operand>{

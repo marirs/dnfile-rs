@@ -6,7 +6,7 @@ pub const TABLE_SHIFT: usize = 24;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Token{
-    value: usize
+    pub value: usize
 }
 
 impl Token{

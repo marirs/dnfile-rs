@@ -250,6 +250,14 @@ impl ClrData{
         let table = self.md_table(index.table())?;
         Ok(table.row(index.row_index())?)
     }
+
+    pub fn functions(&self) -> &Vec<cil::cil::function::Function>{
+        &self.functions
+    }
+
+    pub fn get_us(&self, rid: usize) -> Result<String>{
+        self.metadata.get_us(rid)
+    }
 }
 
 #[repr(C)]
@@ -284,5 +292,14 @@ impl MetaData{
             }
         }
         Err(crate::error::Error::UndefinedMetaDataTableName(name))
+    }
+
+    pub fn get_us(&self, rid: usize) -> Result<String>{
+       for (_, s) in &self.streams{
+           if let stream::Stream::UserStringHeap(us) = &s.stream{
+               return us.get_us(rid);
+           }
+        }
+        Err(crate::error::Error::UndefinedMetaDataTableName("US"))
     }
 }

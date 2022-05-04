@@ -1,3 +1,4 @@
+use crate::Result;
 use super::enums::*;
 use super::super::clr::{token::Token,
                         local::Local,
@@ -6,6 +7,7 @@ use super::super::clr::{token::Token,
 #[derive(Debug, Clone, serde::Serialize)]
 pub enum Operand{
     Token(Token),
+    StringToken(Token),
     Local(Local),
     Argument(Argument),
     Arguments(Vec<Operand>),
@@ -14,11 +16,21 @@ pub enum Operand{
     None
 }
 
+impl Operand{
+    pub fn value(&self) -> Result<usize>{
+        match self{
+            Self::Token(t) => Ok(t.value),
+            Self::StringToken(t) => Ok(t.value),
+            Self::Argument(_) | Self::Local(_) | Self::Arguments(_) | Self::Int(_) | Self::Float(_) | Self::None => Err(crate::error::Error::OperandHasNoValue)
+        }
+    }
+}
+
 impl TryInto<f64> for Operand{
     type Error = crate::error::Error;
     fn try_into(self) -> std::result::Result<f64, Self::Error>{
         match self{
-            Self::Token(_) | Self::Local(_) | Self::Argument(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to f64")),
+            Self::StringToken(_) | Self::Token(_) | Self::Local(_) | Self::Argument(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to f64")),
             Self::Int(i) => Ok(i as f64),
             Self::Float(f) => Ok(f)
         }
@@ -29,7 +41,7 @@ impl TryInto<Argument> for Operand{
     type Error = crate::error::Error;
     fn try_into(self) -> std::result::Result<Argument, Self::Error>{
         match self{
-            Self::Token(_) | Self::Local(_) | Self::Int(_) | Self::Float(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to argument")),
+            Self::StringToken(_) | Self::Token(_) | Self::Local(_) | Self::Int(_) | Self::Float(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to argument")),
             Self::Argument(a) => Ok(a)
         }
     }
@@ -39,7 +51,7 @@ impl TryInto<Local> for Operand{
     type Error = crate::error::Error;
     fn try_into(self) -> std::result::Result<Local, Self::Error>{
         match self{
-            Self::Token(_) | Self::Argument(_) | Self::Int(_) | Self::Float(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to local")),
+            Self::StringToken(_) | Self::Token(_) | Self::Argument(_) | Self::Int(_) | Self::Float(_) | Self::Arguments(_) | Self::None => Err(crate::error::Error::ConversionError("to local")),
             Self::Local(a) => Ok(a)
         }
     }

@@ -8,7 +8,7 @@ use super::enums::*;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct Function {
-    offset: usize,
+    pub offset: usize,
     header_size: usize,
     flags: flags::CilMethodBodyFlags,
     max_stack: usize,
@@ -17,7 +17,7 @@ pub struct Function {
     size: usize,
     raw_bytes: Vec<u8>,
     exception_handlers_size: usize,
-    instructions: Vec<super::instruction::Instruction>,
+    pub instructions: Vec<super::instruction::Instruction>,
     exception_handlers: Vec<super::exception::ExceptionHandler>,
 }
 
