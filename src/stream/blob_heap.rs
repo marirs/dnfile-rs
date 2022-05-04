@@ -12,7 +12,7 @@ impl BlobHeap{
             return Err(crate::error::Error::BlobHeapReadOutOfBound(index, self.data.len()));
         }
         let (data_length, length_size) = crate::utils::read_compressed_usize(&self.data[index..index+4])?;
-        if index+length_size+data_length >= self.data.len(){
+        if index+length_size+data_length >= self.data.len()+1{
             return Err(crate::error::Error::BlobHeapReadOutOfBound(index+data_length+length_size, self.data.len()));
         }
         Ok(self.data[index+length_size..index+length_size+data_length].to_vec())

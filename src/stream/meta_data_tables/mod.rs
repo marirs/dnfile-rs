@@ -12,8 +12,8 @@ const MAX_TABLES: usize = 64;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct MetaDataTable{
-    #[serde(skip_serializing)]
-    data: Vec<u8>,
+    //#[serde(skip_serializing)]
+    //data: Vec<u8>,
     rva: u32,
     pub tables: std::collections::BTreeMap<usize, mdtables::MetaDataTable>
 }
@@ -24,12 +24,12 @@ impl crate::DnPe<'_>{
                                stream_offset: &u32,
                                _stream_size: &usize,
                                _stream_name: &str,
-                               stream_data: Vec<u8>) -> Result<super::Stream>{
+                               _stream_data: Vec<u8>) -> Result<super::Stream>{
 
 
 
         Ok(super::Stream::MetaDataTables(MetaDataTable{
-            data: stream_data,
+            //data: stream_data,
             rva: metadata_rva+stream_offset,
             tables: std::collections::BTreeMap::new()
         }))

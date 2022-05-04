@@ -5,6 +5,8 @@ pub mod stream;
 pub mod utils;
 pub mod cil;
 
+use crate::stream::meta_data_tables::mdtables::{*, enums::*};
+
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 #[derive(Debug, Serialize)]
@@ -89,11 +91,33 @@ impl DnPe<'_>{
         let metadata_struct: MetaDataStruct = self.get_data(&clr_struct.meta_data_rva, &(clr_struct.meta_data_size as usize))?;
         let metadata = self.new_metadata(&clr_struct.meta_data_rva, metadata_struct)?;
         let flags = ClrHeaderFlags::new(clr_struct.flags as usize);
+        let functions = self.parse_functions(&metadata)?;
         Ok(ClrData{
-            clr_struct,
+            //clr_struct,
             metadata,
-            flags
+            flags,
+            functions
         })
+    }
+
+    fn parse_functions(&self, metadata: &MetaData) -> Result<Vec<cil::cil::function::Function>>{
+        let mut res = vec![];
+        let method_def_table = metadata.md_table("MethodDef")?;
+        for i in 0..method_def_table.row_count(){
+            let row = method_def_table.row::<MethodDef>(i)?;
+            if !row.impl_flags.contains(&ClrMethodImpl::MethodCodeType(CorMethodCodeType::IL))
+                || row.flags.contains(&ClrMethodAttr::AttrFlag(CorMethodAttrFlag::Abstract))
+                || row.flags.contains(&ClrMethodAttr::AttrFlag(CorMethodAttrFlag::PinvokeImpl)){
+                    continue;
+                }
+            res.push(self.parse_function(row)?);
+        }
+        Ok(res)
+    }
+    fn parse_function(&self, row: &MethodDef) -> Result<cil::cil::function::Function>{
+        let mut reader =  cil::cil::function::reader::Reader::new(&self.data);
+        reader.seek(self.offset(row.rva)?)?;
+        cil::cil::function::Function::new(&mut reader)
     }
 
     fn new_metadata(&self, metadata_rva: &u32, metadata_struct: MetaDataStruct) -> Result<MetaData>{
@@ -108,8 +132,7 @@ impl DnPe<'_>{
             streams = self.new_streams(metadata_rva, &streams_table_rva, &(number_of_streams as usize))?;
         }
         Ok(MetaData{
-            metadata_struct,
-            version: String::from_utf8(version)?,
+            _version: String::from_utf8(version)?,
             flags,
             streams
         })
@@ -206,27 +229,20 @@ impl ClrHeaderFlags{
 #[derive(Debug, Serialize)]
 pub struct ClrData{
     #[serde(skip_serializing)]
-    clr_struct: ClrStruct,
+//    clr_struct: ClrStruct,
     pub metadata: MetaData,
 //    strings: Option<StringsHeap>,
 //    user_strings: Option<UserStringHeap>,
 //    guids: Option<GuidHeap>,
  //   blobs: Option<BlobHeap>,
 //    mdtables: Option<MetaDataTables>,
-    pub flags: std::collections::BTreeSet<ClrHeaderFlags>
+    pub flags: std::collections::BTreeSet<ClrHeaderFlags>,
+    pub functions: Vec<cil::cil::function::Function>
 }
 
 impl ClrData{
     pub fn md_table(&self, name: &'static str) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable>{
-        for (_, s) in &self.metadata.streams{
-            if let stream::Stream::MetaDataTables(mt) = &s.stream{
-                match mt.tables.get(&stream::meta_data_tables::mdtables::table_name_2_index(name)?){
-                    Some(s) => return Ok(s),
-                    None => return Err(crate::error::Error::UndefinedMetaDataTableName(name))
-                }
-            }
-        }
-        Err(crate::error::Error::UndefinedMetaDataTableName(name))
+        self.metadata.md_table(name)
     }
 
     pub fn resolve_coded_index<T>(&self, index: &dyn stream::meta_data_tables::mdtables::codedindex::CodedIndex) -> Result<&T>
@@ -252,8 +268,21 @@ pub struct MetaDataStruct{
 #[derive(Debug, Serialize)]
 pub struct MetaData{
     #[serde(skip_serializing)]
-    metadata_struct: MetaDataStruct,
-    version: String,
+    _version: String,
     flags: u16,
     pub streams: std::collections::HashMap<String, stream::ClrStream>
+}
+
+impl MetaData{
+    pub fn md_table(&self, name: &'static str) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable>{
+        for (_, s) in &self.streams{
+            if let stream::Stream::MetaDataTables(mt) = &s.stream{
+                match mt.tables.get(&stream::meta_data_tables::mdtables::table_name_2_index(name)?){
+                    Some(s) => return Ok(s),
+                    None => return Err(crate::error::Error::UndefinedMetaDataTableName(name))
+                }
+            }
+        }
+        Err(crate::error::Error::UndefinedMetaDataTableName(name))
+    }
 }

@@ -1,12 +1,12 @@
 use crate::Result;
 
-mod reader;
-mod flags;
+pub mod reader;
+pub mod flags;
 
 use super::super::clr::token::Token;
 use super::enums::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Function {
     offset: usize,
     header_size: usize,
@@ -22,9 +22,9 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(reader: &reader::Reader) -> Result<Self>{
+    pub fn new(reader: &mut reader::Reader) -> Result<Self>{
         let mut res = Self{
-            offset: reader::tell(),
+            offset: reader.tell()?,
             header_size: 0,
             flags: flags::CilMethodBodyFlags::new(0),
             max_stack: 0,
@@ -42,7 +42,7 @@ impl Function {
         Ok(res)
     }
 
-    pub fn parse_header(&mut self, reader: &reader::Reader) -> Result<()>{
+    pub fn parse_header(&mut self, reader: &mut reader::Reader) -> Result<()>{
         let header_byte = reader.read_u8()? as usize;
         if vec![CorILMethod::TinyFormat as usize, CorILMethod::TinyFormat1 as usize].contains(&(header_byte & CorILMethod::FormatMask as usize)){
             self.flags = flags::CilMethodBodyFlags::new(header_byte as usize & CorILMethod::FormatMask as usize);
@@ -61,7 +61,8 @@ impl Function {
             } else {
                 self.local_var_sig_tok = Some(Token::new(local_var_sig_tok));
             }
-            reader.seek(reader.tell() - 12 + self.header_size * 4);
+            let pos = reader.tell()? - 12 + self.header_size * 4;
+            reader.seek(pos)?;
             if self.header_size < 3{
                 self.flags.flags &= 0xFFF7;
             }
@@ -72,26 +73,27 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_instructions(&mut self, reader: &reader::Reader) -> Result<()>{
-        let current_offset = self.offset + self.header_size;
-        let mut code_size = 0;
-        while code_size < self.code_size{
+    pub fn parse_instructions(&mut self, reader: &mut reader::Reader) -> Result<()>{
+        let mut current_offset = self.offset + self.header_size;
+        let code_end_offset = reader.tell()? + self.code_size;
+        while reader.tell()? < code_end_offset{
             let insn = reader.read_instruction(current_offset)?;
-            code_size += insn.size();
+            current_offset += insn.size();
             self.instructions.push(insn);
         }
         Ok(())
     }
 
-    pub fn parse_exception_handlers(&mut self, reader: &reader::Reader) -> Result<()>{
+    pub fn parse_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()>{
         if !self.flags.more_sects(){
-            self.size = reader.tell() - self.offset;
+            self.size = reader.tell()? - self.offset;
             return Ok(())
         }
-        reader.seek((reader.tell() + 3) & ~3);
+        let pos = (reader.tell()? + 3) & !3;
+        reader.seek(pos)?;
         let header_byte = reader.read_u8()?;
         if header_byte as usize & CorILMethodSect::KindMask as usize != 1{
-            self.size = reader.tell() - self.offset;
+            self.size = reader.tell()? - self.offset;
             return Ok(())
         }
         if header_byte as usize & CorILMethodSect::FatFormat as usize != 0{
@@ -99,16 +101,17 @@ impl Function {
         } else {
             self.parse_tiny_exception_handlers(reader)?;
         }
-        self.size = reader.tell() - self.offset;
+        self.size = reader.tell()? - self.offset;
         Ok(())
     }
 
-    pub fn parse_fat_exception_handlers(&mut self, reader: &reader::Reader) -> Result<()>{
-        reader.seek(reader.tell() - 1);
+    pub fn parse_fat_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()>{
+        let pos = reader.tell()? - 1;
+        reader.seek(pos)?;
         let total_size = reader.read_u32()? >> 8;
         let num_exceptions = total_size; // ExceptionHandler.FAT_SIZE
         for _ in 0..num_exceptions{
-            let eh = super::exception::ExceptionHandler::new(reader.read_u32()? as usize);
+            let mut eh = super::exception::ExceptionHandler::new(reader.read_u32()? as usize);
             eh.try_start = reader.read_i32()?;
             eh.try_end = eh.try_start + reader.read_i32()?;
             eh.handler_start = reader.read_i32()?;
@@ -125,9 +128,10 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_tiny_exception_handlers(&mut self, reader: &reader::Reader) -> Result<()>{
+    pub fn parse_tiny_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()>{
         let num_exceptions = reader.read_u8()? as usize;
-        reader.seek(reader.tell() + 2);
+        let pos = reader.tell()? + 2;
+        reader.seek(pos)?;
         for _ in 0..num_exceptions{
             let mut eh = super::exception::ExceptionHandler::new(reader.read_u16()? as usize);
             eh.try_start = reader.read_u16()? as i32;

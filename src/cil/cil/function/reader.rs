@@ -6,6 +6,8 @@ use super::super::{
     enums::*,
     opcode::*};
 
+use std::io::Seek;
+
 pub struct Reader{
     cil_opcodes: OpCodes,
     stream: std::io::BufReader<std::io::Cursor<Vec<u8>>>
@@ -17,6 +19,14 @@ impl Reader{
             cil_opcodes: OpCodes::new(),
             stream: std::io::BufReader::new(std::io::Cursor::new(bytes.to_vec()))
         }
+    }
+
+    pub fn tell(&mut self) -> Result<usize>{
+        Ok(self.stream.stream_position()? as usize)
+    }
+
+    pub fn seek(&mut self, pos: usize) -> Result<usize>{
+        Ok(self.stream.seek(std::io::SeekFrom::Start(pos as u64))? as usize)
     }
 
     pub fn is_arg_operand_instruction(&mut self, insn: &Instruction) -> bool{
@@ -73,7 +83,7 @@ impl Reader{
         Ok(Operand::Int((insn.offset + insn.size() + branch_offset) as i64))
     }
 
-    pub fn read_inline_field(&mut self, insn: &Instruction) -> Result<Operand>{
+    pub fn read_inline_field(&mut self, _insn: &Instruction) -> Result<Operand>{
         let token_value = self.read_u32()? as usize;
         Ok(Operand::Token(Token::new(token_value)))
     }
@@ -161,7 +171,7 @@ impl Reader{
         }
     }
 
-    pub fn read_short_inline_r(&mut self, insn: &Instruction) -> Result<Operand>{
+    pub fn read_short_inline_r(&mut self, _insn: &Instruction) -> Result<Operand>{
         Ok(Operand::Float(self.read_f32()? as f64))
     }
 

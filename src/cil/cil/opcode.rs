@@ -1,6 +1,6 @@
 use super::super::cil::enums::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct OpCode{
     pub name: &'static str,
     pub value: OpCodeValue,
@@ -2134,7 +2134,7 @@ impl OpCodes{
         if (val as usize) >> 8 == 0{
             self.one_byte_op_codes[val as usize] = op_code;
         } else if (val as usize) >> 8 == 0xFE{
-            self.two_byte_op_codes[val as usize] = op_code;
+            self.two_byte_op_codes[val as usize & 0xFF] = op_code;
         }
     }
 }

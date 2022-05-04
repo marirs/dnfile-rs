@@ -2,8 +2,8 @@ use crate::Result;
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct UserStringHeap{
-    #[serde(skip_serializing)]
-    data: Vec<u8>
+    //#[serde(skip_serializing)]
+    //data: Vec<u8>
 }
 
 impl crate::DnPe<'_>{
@@ -12,9 +12,9 @@ impl crate::DnPe<'_>{
                                 _stream_offset: &u32,
                                 _stream_size: &usize,
                                 _stream_name: &str,
-                                stream_data: Vec<u8>) -> Result<super::Stream>{
+                                _stream_data: Vec<u8>) -> Result<super::Stream>{
         Ok(super::Stream::UserStringHeap(UserStringHeap{
-             data: stream_data
+            //data: stream_data
        }))
     }
 }

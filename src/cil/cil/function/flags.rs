@@ -1,6 +1,6 @@
 use super::super::super::cil::enums::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct CilMethodBodyFlags{
     pub flags: usize
 }

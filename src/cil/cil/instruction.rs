@@ -3,7 +3,7 @@ use super::super::clr::{token::Token,
                         local::Local,
                         argument::Argument};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum Operand{
     Token(Token),
     Local(Local),
@@ -45,7 +45,7 @@ impl TryInto<Local> for Operand{
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Instruction{
     pub offset: usize,
     pub opcode: super::opcode::OpCode,

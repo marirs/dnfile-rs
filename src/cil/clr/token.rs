@@ -4,7 +4,7 @@ pub const RID_MASK: usize = 0x00FFFFFF;
 pub const RID_MAX: usize = RID_MASK;
 pub const TABLE_SHIFT: usize = 24;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct Token{
     value: usize
 }

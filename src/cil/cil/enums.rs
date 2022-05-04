@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq, Copy)]
+#[derive(Debug, Clone, PartialEq, Copy, serde::Serialize)]
 pub enum OpCodeValue{
     UNKNOWN1 = 0x0100,
     UNKNOWN2 = 0x0101,
@@ -232,7 +232,7 @@ pub enum OpCodeValue{
     Xor = 0x0061
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum FlowControl{
     Branch = 0,
     Break = 1,
@@ -245,7 +245,7 @@ pub enum FlowControl{
     Throw = 8,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum OpCodeType{
     Annotation = 0,
     Macro = 1,
@@ -256,7 +256,7 @@ pub enum OpCodeType{
     Experimental = 6,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum StackBehaviour{
     Pop0 = 0,
     Pop1 = 1,
@@ -291,7 +291,7 @@ pub enum StackBehaviour{
     PopAll = 0xFF,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub enum OperandType{
     InlineBrTarget = 0,
     InlineField = 1,
@@ -314,7 +314,7 @@ pub enum OperandType{
     ShortInlineVar = 18,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum ExceptionHandlerType{
     Catch = 0,
     Filter = 1,
@@ -323,7 +323,7 @@ pub enum ExceptionHandlerType{
     Duplicated = 8,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum CorILMethod{
     SmallFormat = 0,
     TinyFormat = 2,
@@ -335,7 +335,7 @@ pub enum CorILMethod{
     CompressedIL = 0x40,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub enum CorILMethodSect{
     EHTable = 1,
     OptILTable = 2,

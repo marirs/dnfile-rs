@@ -413,8 +413,8 @@ impl MDTableRowTrait for Field{
         let strings_heap = if let Some(s) = strings_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("string"))};
         let blobs_heap = if let Some(s) = blobs_heap {s} else {return Err(crate::error::Error::RefToUndefinedHeap("blob"))};
         self.flags = enums::ClrFieldAttr::new(crate::utils::read_usize(&data[0..s1])?);
-        self.name = strings_heap.get_string(&data[s1..s1+s2])?;
-        self.signature = blobs_heap.get_blob(&data[s2..s2+s3])?;
+        self.name = strings_heap.get_string(&data[s1..s2])?;
+        self.signature = blobs_heap.get_blob(&data[s2..s3])?;
         Ok(())
     }
 }
