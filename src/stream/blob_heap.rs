@@ -19,7 +19,7 @@ impl BlobHeap{
     }
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn new_blob_heap(&self,
                          _metadata_rva: &u32,
                          _stream_offset: &u32,

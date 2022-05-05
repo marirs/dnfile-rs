@@ -6,7 +6,7 @@ pub struct GenericStream{
     //data: Vec<u8>
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn new_generic_stream(&self,
                               _metadata_rva: &u32,
                               _stream_offset: &u32,

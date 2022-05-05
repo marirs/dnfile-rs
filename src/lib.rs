@@ -10,16 +10,14 @@ use crate::stream::meta_data_tables::mdtables::{*, enums::*};
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 #[derive(Debug, Serialize)]
-pub struct DnPe<'a>{
+pub struct DnPe{
     name: String,
-    #[serde(skip_serializing)]
-    pub pe: goblin::pe::PE<'a>,
     #[serde(skip_serializing)]
     data: Vec<u8>,
     net: Option<ClrData>
 }
 
-impl DnPe<'_>{
+impl DnPe{
     pub fn net(&self) -> Result<&ClrData>{
         match &self.net{
             Some(s) => Ok(s),
@@ -27,18 +25,20 @@ impl DnPe<'_>{
         }
     }
 
-    pub fn new<'a>(name: &'a str, data: &'a [u8]) -> Result<DnPe<'a>>{
-        let pe = match goblin::Object::parse(&data)?{
-            goblin::Object::PE(pe) => pe,
+    pub fn pe<'a>(&'a self) -> Result<goblin::pe::PE<'a>>{
+        match goblin::Object::parse(&self.data)?{
+            goblin::Object::PE(pe) => Ok(pe),
             _ => return Err(error::Error::UnsupportedBinaryFormat("main"))
-        };
+        }
+    }
+
+    pub fn new(name: &str) -> Result<DnPe>{
         let mut res = DnPe{
-            pe,
             name: name.to_string(),
-            data: data.to_vec().clone(),
+            data: std::fs::read(name)?,
             net: None
         };
-        let opt_header = match &res.pe.header.optional_header{
+        let opt_header = match res.pe()?.header.optional_header{
             Some(oh) => oh,
             None => return Err(error::Error::UnsupportedBinaryFormat("optional header absence"))
         };
@@ -52,7 +52,7 @@ impl DnPe<'_>{
     }
 
     fn offset(&self, rva: u32) -> Result<usize>{
-        match goblin::pe::utils::find_offset(rva as usize, &self.pe.sections, self.pe.header.optional_header.unwrap().windows_fields.file_alignment, &goblin::pe::options::ParseOptions{resolve_rva: true}){
+        match goblin::pe::utils::find_offset(rva as usize, &self.pe()?.sections, self.pe()?.header.optional_header.unwrap().windows_fields.file_alignment, &goblin::pe::options::ParseOptions{resolve_rva: true}){
             Some(s) => Ok(s),
             None => return Err(crate::error::Error::UnresolvedRvaError(rva))
         }
@@ -60,10 +60,10 @@ impl DnPe<'_>{
 
     fn get_data<'a, T>(&'a self, rva: &'a u32, size: &'a usize) -> Result<T>
     where T: scroll::ctx::TryFromCtx<'a, goblin::container::Endian, Error = scroll::Error>{
-        Ok(goblin::pe::utils::get_data(&self.data, &self.pe.sections, goblin::pe::data_directories::DataDirectory{
+        Ok(goblin::pe::utils::get_data(&self.data, &self.pe()?.sections, goblin::pe::data_directories::DataDirectory{
             virtual_address: *rva,
             size: *size as u32
-        }, self.pe.header.optional_header.unwrap().windows_fields.file_alignment)?)
+        }, self.pe()?.header.optional_header.unwrap().windows_fields.file_alignment)?)
     }
 
     fn get_nullterminated_string(&self, rva: &u32) -> Result<String>{

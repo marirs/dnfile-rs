@@ -22,7 +22,7 @@ impl GuidHeap{
     }
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn new_guid_heap(&self,
                          _metadata_rva: &u32,
                          _stream_offset: &u32,

@@ -59,7 +59,7 @@ impl ClrStream{
     }
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn nnew_clr_stream(&self,
                            metadata_rva: &u32,
                            stream_offset: &u32,

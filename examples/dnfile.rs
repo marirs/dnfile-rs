@@ -4,7 +4,7 @@ pub fn main() -> dnfile::Result<()>{
         if i == 1 {
             let path = std::path::Path::new(arg.as_str());
             let buffer = std::fs::read(path)?;
-            let df = dnfile::DnPe::new("tests/hello-world.exe", &buffer)?;
+            let df = dnfile::DnPe::new(arg.as_str(), &buffer)?;
             println!("{:#02x?}", df);
         }
     }

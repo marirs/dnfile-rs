@@ -18,7 +18,7 @@ pub struct MetaDataTable{
     pub tables: std::collections::BTreeMap<usize, mdtables::MetaDataTable>
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn new_meta_data_table(&self,
                                metadata_rva: &u32,
                                stream_offset: &u32,

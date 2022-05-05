@@ -2060,7 +2060,7 @@ impl MetaDataTable{
     }
 }
 
-impl crate::DnPe<'_>{
+impl crate::DnPe{
     pub fn create_md_table(&self,
                            i: &usize,
                            table_rowcounts: &Vec<usize>,
