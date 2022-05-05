@@ -1,19 +1,21 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("{0}")]
-    RegexErr(#[from] regex::Error),
+    RegexError(#[from] regex::Error),
     #[error("goblin error")]
-    ParseErr(#[from] goblin::error::Error),
+    ParseError(#[from] goblin::error::Error),
     #[error("unsupported  binary format")]
     UnsupportedBinaryFormat(&'static str),
     #[error("unsupported  binary format")]
     Bincode(#[from] Box<bincode::ErrorKind>),
     #[error("{0}")]
-    IoErr(#[from] std::io::Error),
+    IoError(#[from] std::io::Error),
     #[error("{0}")]
-    UnresolvedRva(u32),
+    UnresolvedRvaError(u32),
     #[error("{0}")]
-    Utf8Err(#[from] std::string::FromUtf8Error),
+    Utf8Error(#[from] std::string::FromUtf8Error),
+    #[error("{0}")]
+    Utf16Error(#[from] std::string::FromUtf16Error),
     #[error("undefined stream")]
     UndefinedStream,
     #[error("undefined meta data table index (0..63) {0}")]
@@ -29,7 +31,7 @@ pub enum Error {
     #[error("{0}")]
     CodedIndexWithUndefinedTable(String),
     #[error("{0}")]
-    TryFromSliceErr(#[from] std::array::TryFromSliceError),
+    TryFromSliceError(#[from] std::array::TryFromSliceError),
     #[error("{0}")]
     RefToUndefinedHeap(&'static str),
     #[error("try to read string from non string heap")]
@@ -46,10 +48,22 @@ pub enum Error {
     BlobHeapReadOutOfBound(usize, usize),
     #[error("{0} {1}")]
     GuidHeapReadOutOfBound(usize, usize),
+    #[error("{0} {1}")]
+    UserStringHeapReadOutOfBound(usize, usize),
     #[error("{0}")]
-    FormatErr(String),
+    FormatError(String),
     #[error("{0}")]
-    ParseGuid(#[from] uuid::Error),
+    ParseGuidError(#[from] uuid::Error),
+    #[error("undefined operand type")]
+    UndefinedOperandType(crate::cil::cil::enums::OperandType),
+    #[error("decompile error")]
+    DecompileError,
+    #[error("{0}")]
+    ConversionError(&'static str),
+    #[error("{0}")]
+    MethodBodyFormatError(String),
+    #[error("operand not have value")]
+    OperandHasNoValue,
     #[error("not implemented")]
-    NotImplemented,
+    NotImplementedError,
 }
