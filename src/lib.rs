@@ -5,7 +5,7 @@ pub mod error;
 pub mod stream;
 pub mod utils;
 
-use crate::stream::meta_data_tables::mdtables::{enums::*, *};
+use crate::{stream::meta_data_tables::mdtables::{enums::*, *}, error::Error};
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -21,7 +21,7 @@ impl DnPe {
     pub fn net(&self) -> Result<&ClrData> {
         match &self.net {
             Some(s) => Ok(s),
-            None => Err(crate::error::Error::NotImplementedError),
+            None => Err(Error::NotImplementedError),
         }
     }
 
@@ -75,7 +75,7 @@ impl DnPe {
             &goblin::pe::options::ParseOptions { resolve_rva: true },
         ) {
             Some(s) => Ok(s),
-            None => Err(crate::error::Error::UnresolvedRvaError(rva)),
+            None => Err(Error::UnresolvedRvaError(rva)),
         }
     }
 
@@ -375,11 +375,11 @@ impl MetaData {
                         name,
                     )?) {
                     Some(s) => return Ok(s),
-                    None => return Err(crate::error::Error::UndefinedMetaDataTableName(name)),
+                    None => return Err(Error::UndefinedMetaDataTableName(name)),
                 }
             }
         }
-        Err(crate::error::Error::UndefinedMetaDataTableName(name))
+        Err(Error::UndefinedMetaDataTableName(name))
     }
 
     pub fn get_us(&self, rid: usize) -> Result<String> {
@@ -388,6 +388,6 @@ impl MetaData {
                 return us.get_us(rid);
             }
         }
-        Err(crate::error::Error::UndefinedMetaDataTableName("US"))
+        Err(Error::UndefinedMetaDataTableName("US"))
     }
 }

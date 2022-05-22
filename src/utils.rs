@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 pub fn read_usize(data: &[u8]) -> Result<usize> {
     match data.len() {
@@ -6,7 +6,7 @@ pub fn read_usize(data: &[u8]) -> Result<usize> {
         2 => Ok(u16::from_le_bytes(data[..].try_into()?) as usize),
         4 => Ok(u32::from_le_bytes(data[..].try_into()?) as usize),
         8 => Ok(u64::from_le_bytes(data[..].try_into()?) as usize),
-        _ => Err(crate::error::Error::CantReadUsizeFromBytesLen(data.len())),
+        _ => Err(Error::CantReadUsizeFromBytesLen(data.len())),
     }
 }
 
@@ -24,6 +24,6 @@ pub fn read_compressed_usize(data: &[u8]) -> Result<(usize, usize)> {
         value |= data[3] as usize;
         Ok((value, 4))
     } else {
-        Err(crate::error::Error::ReadCompressedUsize)
+        Err(Error::ReadCompressedUsize)
     }
 }
