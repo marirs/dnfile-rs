@@ -25,7 +25,7 @@ impl DnPe {
         }
     }
 
-    pub fn pe<'a>(&'a self) -> Result<goblin::pe::PE<'a>> {
+    pub fn pe(&self) -> Result<goblin::pe::PE> {
         match goblin::Object::parse(&self.data)? {
             goblin::Object::PE(pe) => Ok(pe),
             _ => Err(error::Error::UnsupportedBinaryFormat("main")),
