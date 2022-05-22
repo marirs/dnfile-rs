@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 use serde::ser::{Serialize, SerializeSeq};
 
 pub mod codedindex;
@@ -86,7 +86,7 @@ where
 {
     fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
         if data.len() < self.table.len() * self.row_size() {
-            return Err(crate::error::Error::NotEnoughData(
+            return Err(Error::NotEnoughData(
                 data.len(),
                 self.table.len() * self.row_size(),
             ));
@@ -95,7 +95,7 @@ where
         let row_size = self.row_size();
         for r in &mut self.table {
             if data.len() - curr_offset < row_size {
-                return Err(crate::error::Error::NotEnoughData(
+                return Err(Error::NotEnoughData(
                     row_size,
                     data.len() - curr_offset,
                 ));
@@ -118,7 +118,7 @@ where
         if i < self.row_count() {
             Ok(&self.table[i])
         } else {
-            Err(crate::error::Error::RowIndexOutOfBound(i, self.row_count()))
+            Err(Error::RowIndexOutOfBound(i, self.row_count()))
         }
     }
 
@@ -126,7 +126,7 @@ where
         if i < self.row_count() {
             Ok(&mut self.table[i])
         } else {
-            Err(crate::error::Error::RowIndexOutOfBound(i, self.row_count()))
+            Err(Error::RowIndexOutOfBound(i, self.row_count()))
         }
     }
 
@@ -304,12 +304,12 @@ impl MDTableRowTrait for Module {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let guids_heap = if let Some(s) = guids_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.generation = crate::utils::read_usize(&data[0..s1])? as u16;
         self.name = strings_heap.get_string(&data[s1..s1 + s2])?;
@@ -367,7 +367,7 @@ impl MDTableRowTrait for TypeRef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.resolution_scope.set(&data[0..first_size], tables)?;
         self.type_name =
@@ -436,7 +436,7 @@ impl MDTableRowTrait for TypeDef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags.set(&data[0..s1])?;
         self.type_name = strings_heap.get_string(&data[s1..s1 + s2])?;
@@ -529,12 +529,12 @@ impl MDTableRowTrait for Field {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.flags = enums::ClrFieldAttr::new(crate::utils::read_usize(&data[0..s1])?);
         self.name = strings_heap.get_string(&data[s1..s2])?;
@@ -634,12 +634,12 @@ impl MDTableRowTrait for MethodDef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.rva = crate::utils::read_usize(&data[0..s1])? as u32;
         self.impl_flags = enums::ClrMethodImpl::new(crate::utils::read_usize(&data[s1..s2])?);
@@ -731,7 +731,7 @@ impl MDTableRowTrait for Param {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags = enums::ClrParamAttr::new(crate::utils::read_usize(&data[0..s1])?);
         self.sequence = crate::utils::read_usize(&data[s1..s2])?;
@@ -842,12 +842,12 @@ impl MDTableRowTrait for MemberRef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.class.set(&data[0..s1], tables)?;
         self.name = strings_heap.get_string(&data[s1..s2])?;
@@ -910,7 +910,7 @@ impl MDTableRowTrait for Constant {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self._type = crate::utils::read_usize(&data[0..s1])? as u32;
         self.padding = crate::utils::read_usize(&data[s1..s2])? as u32;
@@ -976,7 +976,7 @@ impl MDTableRowTrait for CustomAttribute {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.parent.set(&data[0..first], tables)?;
         self._type.set(&data[first..first + second], tables)?;
@@ -1033,7 +1033,7 @@ impl MDTableRowTrait for FieldMarshal {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.parent.set(&data[0..s1], tables)?;
         self.native_type = blobs_heap.get_blob(&data[s1..s2])?;
@@ -1091,7 +1091,7 @@ impl MDTableRowTrait for DeclSecurity {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.action = crate::utils::read_usize(&data[0..s1])? as u32;
         self.parent.set(&data[s1..s2], tables)?;
@@ -1225,7 +1225,7 @@ impl MDTableRowTrait for StandAloneSig {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.signature = blobs_heap.get_blob(&data[0..s1])?;
         Ok(())
@@ -1362,7 +1362,7 @@ impl MDTableRowTrait for Event {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.event_flags = enums::ClrEventAttr::new(crate::utils::read_usize(&data[0..s1])?);
         self.name = strings_heap.get_string(&data[s1..s2])?;
@@ -1491,12 +1491,12 @@ impl MDTableRowTrait for Property {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.flags = enums::ClrPropertyAttr::new(crate::utils::read_usize(&data[0..s1])?);
         self.name = strings_heap.get_string(&data[s1..s2])?;
@@ -1665,7 +1665,7 @@ impl MDTableRowTrait for ModuleRef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.name = strings_heap.get_string(&data[0..s1])?;
         Ok(())
@@ -1709,7 +1709,7 @@ impl MDTableRowTrait for TypeSpec {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.signature = blobs_heap.get_blob(&data[0..s1])?;
         Ok(())
@@ -1770,7 +1770,7 @@ impl MDTableRowTrait for ImplMap {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.mapping_flags = enums::ClrPinvokeMap::new(crate::utils::read_usize(&data[0..s1])?);
         self.member_forwarded.set(&data[s1..s2], tables)?;
@@ -1956,12 +1956,12 @@ impl MDTableRowTrait for Assembly {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.hash_alg_id =
             enums::AssemblyHashAlgorithm::new(crate::utils::read_usize(&data[0..s1])?);
@@ -2120,12 +2120,12 @@ impl MDTableRowTrait for AssemblyRef {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.major_version = crate::utils::read_usize(&data[0..s1])? as u32;
         self.minor_version = crate::utils::read_usize(&data[s1..s2])? as u32;
@@ -2277,12 +2277,12 @@ impl MDTableRowTrait for File {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.flags = enums::ClrFileFlags::new(crate::utils::read_usize(&data[0..s1])?);
         self.name = strings_heap.get_string(&data[s1..s2])?;
@@ -2348,7 +2348,7 @@ impl MDTableRowTrait for ExportedType {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags.set(&data[0..s1])?;
         self.type_def_id = crate::utils::read_usize(&data[s1..s2])? as u32;
@@ -2413,7 +2413,7 @@ impl MDTableRowTrait for ManifestResource {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.offset = crate::utils::read_usize(&data[0..s1])? as u32;
         self.flags = enums::ClrManifestResourceFlags::new(crate::utils::read_usize(&data[s1..s2])?);
@@ -2523,7 +2523,7 @@ impl MDTableRowTrait for GenericParam {
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("string"));
+            return Err(Error::RefToUndefinedHeap("string"));
         };
         self.number = crate::utils::read_usize(&data[0..s1])? as u32;
         self.flags = enums::ClrGenericParamAttr::new(crate::utils::read_usize(&data[s1..s2])?);
@@ -2580,7 +2580,7 @@ impl MDTableRowTrait for GenericMethod {
         let blobs_heap = if let Some(s) = blobs_heap {
             s
         } else {
-            return Err(crate::error::Error::RefToUndefinedHeap("blob"));
+            return Err(Error::RefToUndefinedHeap("blob"));
         };
         self.unknown1.set(&data[0..s1], tables)?;
         self.unknown2 = blobs_heap.get_blob(&data[s1..s2])?;
@@ -2744,7 +2744,7 @@ impl MetaDataTable {
             .get_row()
             .as_any()
             .downcast_ref::<T>()
-            .ok_or(crate::error::Error::RowIndexOutOfBound(i, self.row_count()))
+            .ok_or_else(|| Error::RowIndexOutOfBound(i, self.row_count()))
     }
 }
 
@@ -3187,7 +3187,7 @@ impl crate::DnPe {
                 blobs_offset_size,
                 tables_row_counts,
             )?)),
-            _ => Err(crate::error::Error::UndefinedMetaDataTableIndex(i as u32)),
+            _ => Err(Error::UndefinedMetaDataTableIndex(i as u32)),
         }
     }
 
@@ -3278,6 +3278,6 @@ pub fn table_name_2_index(name: &'static str) -> Result<usize> {
         // 45 through 63 are not used
         "Unused" => Ok(62),
         "MaxTable" => Ok(63),
-        _ => Err(crate::error::Error::UndefinedMetaDataTableName(name)),
+        _ => Err(Error::UndefinedMetaDataTableName(name)),
     }
 }
