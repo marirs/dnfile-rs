@@ -28,7 +28,7 @@ impl DnPe {
     pub fn pe(&self) -> Result<goblin::pe::PE> {
         match goblin::Object::parse(&self.data)? {
             goblin::Object::PE(pe) => Ok(pe),
-            _ => Err(error::Error::UnsupportedBinaryFormat("main")),
+            _ => Err(Error::UnsupportedBinaryFormat("main")),
         }
     }
 
@@ -41,7 +41,7 @@ impl DnPe {
         let opt_header = match res.pe()?.header.optional_header {
             Some(oh) => oh,
             None => {
-                return Err(error::Error::UnsupportedBinaryFormat(
+                return Err(Error::UnsupportedBinaryFormat(
                     "optional header absence",
                 ))
             }
@@ -49,7 +49,7 @@ impl DnPe {
         let clr_directory = match opt_header.data_directories.get_clr_runtime_header() {
             Some(oh) => oh,
             None => {
-                return Err(error::Error::UnsupportedBinaryFormat(
+                return Err(Error::UnsupportedBinaryFormat(
                     "ClR runtime header absence",
                 ))
             }
