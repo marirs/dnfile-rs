@@ -367,7 +367,7 @@ impl MetaData {
         &self,
         name: &'static str,
     ) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable> {
-        for (_, s) in &self.streams {
+        for s in self.streams.values() {
             if let stream::Stream::MetaDataTables(mt) = &s.stream {
                 match mt
                     .tables
@@ -383,7 +383,7 @@ impl MetaData {
     }
 
     pub fn get_us(&self, rid: usize) -> Result<String> {
-        for (_, s) in &self.streams {
+        for s in self.streams.values() {
             if let stream::Stream::UserStringHeap(us) = &s.stream {
                 return us.get_us(rid);
             }
