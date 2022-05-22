@@ -1,23 +1,22 @@
 use super::enums::ExceptionHandlerType;
 
-
 pub const TINY_SIZE: usize = 12;
 pub const FAT_SIZE: usize = 24;
 
 #[derive(Debug, Default, Clone, serde::Serialize)]
-pub struct ExceptionHandler{
+pub struct ExceptionHandler {
     pub exception_type: usize,
     pub try_start: i32,
     pub try_end: i32,
     pub filter_start: i32,
     pub handler_start: i32,
     pub handler_end: i32,
-    pub catch_type: Option<super::super::clr::token::Token>
+    pub catch_type: Option<super::super::clr::token::Token>,
 }
 
-impl ExceptionHandler{
-    pub fn new(exception_type: usize) -> Self{
-        Self{
+impl ExceptionHandler {
+    pub fn new(exception_type: usize) -> Self {
+        Self {
             exception_type,
             try_start: -1,
             try_end: -1,
@@ -28,19 +27,19 @@ impl ExceptionHandler{
         }
     }
 
-    pub fn is_catch(&self) -> bool{
+    pub fn is_catch(&self) -> bool {
         self.exception_type & 7 == ExceptionHandlerType::Catch as usize
     }
 
-    pub fn is_filter(&self) -> bool{
+    pub fn is_filter(&self) -> bool {
         self.exception_type & ExceptionHandlerType::Filter as usize != 0
     }
 
-    pub fn is_finally(&self) -> bool{
+    pub fn is_finally(&self) -> bool {
         self.exception_type & ExceptionHandlerType::Finally as usize != 0
     }
 
-    pub fn is_fault(&self) -> bool{
+    pub fn is_fault(&self) -> bool {
         self.exception_type & ExceptionHandlerType::Fault as usize != 0
     }
 }

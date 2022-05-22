@@ -1,7 +1,7 @@
 use super::super::cil::enums::*;
 
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct OpCode{
+pub struct OpCode {
     pub name: &'static str,
     pub value: OpCodeValue,
     pub operand_type: OperandType,
@@ -11,26 +11,28 @@ pub struct OpCode{
     pub stack_pop: StackBehaviour,
 }
 
-impl OpCode{
-    pub fn new(name: &'static str,
-               value: OpCodeValue,
-               operand_type: OperandType,
-               flow_control: FlowControl,
-               op_code_type: OpCodeType,
-               stack_push: StackBehaviour,
-               stack_pop: StackBehaviour) -> Self{
-        Self{
+impl OpCode {
+    pub fn new(
+        name: &'static str,
+        value: OpCodeValue,
+        operand_type: OperandType,
+        flow_control: FlowControl,
+        op_code_type: OpCodeType,
+        stack_push: StackBehaviour,
+        stack_pop: StackBehaviour,
+    ) -> Self {
+        Self {
             name,
             value,
             operand_type,
             flow_control,
             op_code_type,
             stack_push,
-            stack_pop
+            stack_pop,
         }
     }
 
-    pub fn size(&self) -> usize{
+    pub fn size(&self) -> usize {
         if ((self.value as usize) < 0x100) || (self.value == OpCodeValue::UNKNOWN1) {
             1
         } else {
@@ -40,28 +42,38 @@ impl OpCode{
 }
 
 #[derive(Debug)]
-pub struct OpCodes{
+pub struct OpCodes {
     pub one_byte_op_codes: Vec<OpCode>,
-    pub two_byte_op_codes: Vec<OpCode>
+    pub two_byte_op_codes: Vec<OpCode>,
 }
 
-impl OpCodes{
-    pub fn new() -> Self{
-        let mut res = Self{
-            one_byte_op_codes: vec![OpCode::new("UNKNOWN1",
-                                                OpCodeValue::UNKNOWN1,
-                                                OperandType::InlineNone,
-                                                FlowControl::Meta,
-                                                OpCodeType::Nternal,
-                                                StackBehaviour::Push0,
-                                                StackBehaviour::Pop0); 0x100],
-            two_byte_op_codes: vec![OpCode::new("UNKNOWN2",
-                                                OpCodeValue::UNKNOWN2,
-                                                OperandType::InlineNone,
-                                                FlowControl::Meta,
-                                                OpCodeType::Nternal,
-                                                StackBehaviour::Push0,
-                                                StackBehaviour::Pop0); 0x100],
+impl OpCodes {
+    pub fn new() -> Self {
+        let mut res = Self {
+            one_byte_op_codes: vec![
+                OpCode::new(
+                    "UNKNOWN1",
+                    OpCodeValue::UNKNOWN1,
+                    OperandType::InlineNone,
+                    FlowControl::Meta,
+                    OpCodeType::Nternal,
+                    StackBehaviour::Push0,
+                    StackBehaviour::Pop0
+                );
+                0x100
+            ],
+            two_byte_op_codes: vec![
+                OpCode::new(
+                    "UNKNOWN2",
+                    OpCodeValue::UNKNOWN2,
+                    OperandType::InlineNone,
+                    FlowControl::Meta,
+                    OpCodeType::Nternal,
+                    StackBehaviour::Push0,
+                    StackBehaviour::Pop0
+                );
+                0x100
+            ],
         };
 
         res.add_op_code(OpCode::new(
@@ -2129,11 +2141,11 @@ impl OpCodes{
         res
     }
 
-    fn add_op_code(&mut self, op_code: OpCode){
+    fn add_op_code(&mut self, op_code: OpCode) {
         let val = op_code.value;
-        if (val as usize) >> 8 == 0{
+        if (val as usize) >> 8 == 0 {
             self.one_byte_op_codes[val as usize] = op_code;
-        } else if (val as usize) >> 8 == 0xFE{
+        } else if (val as usize) >> 8 == 0xFE {
             self.two_byte_op_codes[val as usize & 0xFF] = op_code;
         }
     }
