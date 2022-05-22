@@ -253,8 +253,8 @@ where
         }
     }
 
-    pub fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
-        self.data = data.clone();
+    pub fn set_data(&mut self, data: &[u8]) -> Result<()> {
+        self.data = data.to_owned();
         Ok(())
     }
 }
