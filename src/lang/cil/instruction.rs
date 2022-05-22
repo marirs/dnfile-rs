@@ -1,6 +1,6 @@
 use super::super::clr::{argument::Argument, local::Local, token::Token};
 use super::enums::*;
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub enum Operand {
@@ -24,7 +24,7 @@ impl Operand {
             | Self::Arguments(_)
             | Self::Int(_)
             | Self::Float(_)
-            | Self::None => Err(crate::error::Error::OperandHasNoValue),
+            | Self::None => Err(Error::OperandHasNoValue),
         }
     }
 }
@@ -38,7 +38,7 @@ impl TryInto<f64> for Operand {
             | Self::Local(_)
             | Self::Argument(_)
             | Self::Arguments(_)
-            | Self::None => Err(crate::error::Error::ConversionError("to f64")),
+            | Self::None => Err(Error::ConversionError("to f64")),
             Self::Int(i) => Ok(i as f64),
             Self::Float(f) => Ok(f),
         }
@@ -55,7 +55,7 @@ impl TryInto<Argument> for Operand {
             | Self::Int(_)
             | Self::Float(_)
             | Self::Arguments(_)
-            | Self::None => Err(crate::error::Error::ConversionError("to argument")),
+            | Self::None => Err(Error::ConversionError("to argument")),
             Self::Argument(a) => Ok(a),
         }
     }
@@ -71,7 +71,7 @@ impl TryInto<Local> for Operand {
             | Self::Int(_)
             | Self::Float(_)
             | Self::Arguments(_)
-            | Self::None => Err(crate::error::Error::ConversionError("to local")),
+            | Self::None => Err(Error::ConversionError("to local")),
             Self::Local(a) => Ok(a),
         }
     }

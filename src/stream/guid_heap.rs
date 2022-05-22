@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct GuidHeap {
@@ -14,7 +14,7 @@ impl GuidHeap {
         }
         let offset = (index - 1) * size;
         if offset + size > self.data.len() {
-            return Err(crate::error::Error::GuidHeapReadOutOfBound(
+            return Err(Error::GuidHeapReadOutOfBound(
                 index,
                 self.data.len(),
             ));

@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct StringHeap {
@@ -9,7 +9,7 @@ pub struct StringHeap {
 impl StringHeap {
     pub fn get(&self, index: usize) -> Result<String> {
         if index >= self.data.len() {
-            return Err(crate::error::Error::StringHeapReadOutOfBound(
+            return Err(Error::StringHeapReadOutOfBound(
                 index,
                 self.data.len(),
             ));

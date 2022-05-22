@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 pub mod blob_heap;
 pub mod generic_stream;
@@ -36,7 +36,7 @@ impl ClrStream {
             let index = crate::utils::read_usize(index)?;
             s.get(index)
         } else {
-            Err(crate::error::Error::TryReadStringFromNotStringHeap)
+            Err(Error::TryReadStringFromNotStringHeap)
         }
     }
 
@@ -45,7 +45,7 @@ impl ClrStream {
             let index = crate::utils::read_usize(index)?;
             s.get(index)
         } else {
-            Err(crate::error::Error::TryReadStringFromNotStringHeap)
+            Err(Error::TryReadStringFromNotStringHeap)
         }
     }
 
@@ -54,7 +54,7 @@ impl ClrStream {
             let index = crate::utils::read_usize(index)?;
             s.get(index)
         } else {
-            Err(crate::error::Error::TryReadGuidFromNotGuidHeap)
+            Err(Error::TryReadGuidFromNotGuidHeap)
         }
     }
 }
@@ -116,7 +116,7 @@ impl crate::DnPe {
                     stream_name,
                     stream_data,
                 )?,
-                &_ => return Err(crate::error::Error::UndefinedStream),
+                &_ => return Err(Error::UndefinedStream),
             },
         })
     }

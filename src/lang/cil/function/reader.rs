@@ -1,7 +1,7 @@
 use super::super::super::clr::{argument::Argument, local::Local, token::Token};
 use super::super::instruction::{Instruction, Operand};
 use super::super::{enums::*, opcode::*};
-use crate::Result;
+use crate::{error::Error, Result};
 use byteorder::ReadBytesExt;
 
 use std::io::Seek;
@@ -227,7 +227,7 @@ impl Reader {
             OperandType::ShortInlineI => self.read_short_inline_i(insn),
             OperandType::ShortInlineR => self.read_short_inline_r(insn),
             OperandType::ShortInlineVar => self.read_short_inline_var(insn),
-            _ => Err(crate::error::Error::UndefinedOperandType(
+            _ => Err(Error::UndefinedOperandType(
                 insn.opcode.operand_type.clone(),
             )),
         }

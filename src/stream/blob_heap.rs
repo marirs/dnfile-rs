@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct BlobHeap {
@@ -9,7 +9,7 @@ pub struct BlobHeap {
 impl BlobHeap {
     pub fn get(&self, index: usize) -> Result<Vec<u8>> {
         if index >= self.data.len() {
-            return Err(crate::error::Error::BlobHeapReadOutOfBound(
+            return Err(Error::BlobHeapReadOutOfBound(
                 index,
                 self.data.len(),
             ));
@@ -17,7 +17,7 @@ impl BlobHeap {
         let (data_length, length_size) =
             crate::utils::read_compressed_usize(&self.data[index..index + 4])?;
         if index + length_size + data_length >= self.data.len() + 1 {
-            return Err(crate::error::Error::BlobHeapReadOutOfBound(
+            return Err(Error::BlobHeapReadOutOfBound(
                 index + data_length + length_size,
                 self.data.len(),
             ));

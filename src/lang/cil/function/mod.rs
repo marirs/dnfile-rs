@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 pub mod flags;
 pub mod reader;
@@ -79,7 +79,7 @@ impl Function {
             }
             self.header_size *= 4
         } else {
-            return Err(crate::error::Error::MethodBodyFormatError(format!(
+            return Err(Error::MethodBodyFormatError(format!(
                 "bad header format {:02x}",
                 header_byte as usize & CorILMethod::FormatMask as usize
             )));

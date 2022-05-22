@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone)]
 pub enum CorTypeVisibility {
@@ -234,7 +234,7 @@ pub struct ClrTypeAttr {
 impl ClrTypeAttr {
     pub fn set(&mut self, data: &[u8]) -> Result<()> {
         if data.len() != 4 {
-            return Err(crate::error::Error::FormatError(format!(
+            return Err(Error::FormatError(format!(
                 "CtrlTypeAttr incorrect size {} {}",
                 data.len(),
                 4
