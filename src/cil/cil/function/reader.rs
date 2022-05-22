@@ -28,7 +28,7 @@ impl Reader {
     }
 
     pub fn is_arg_operand_instruction(&mut self, insn: &Instruction) -> bool {
-        return vec![
+        vec![
             OpCodeValue::Ldarg,
             OpCodeValue::Ldarg_S,
             OpCodeValue::Ldarga,
@@ -36,7 +36,7 @@ impl Reader {
             OpCodeValue::Starg,
             OpCodeValue::Starg_S,
         ]
-        .contains(&insn.opcode.value);
+        .contains(&insn.opcode.value)
     }
 
     pub fn read_u8(&mut self) -> Result<u8> {

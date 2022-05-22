@@ -107,7 +107,7 @@ where
     }
 
     fn row_size(&self) -> usize {
-        if self.table.len() == 0 {
+        if self.table.is_empty() {
             0
         } else {
             self.table[0].size()
@@ -210,10 +210,7 @@ where
         blobss_heap: &Option<&crate::stream::ClrStream>,
         guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
-        let nn = match next_row {
-            Some(n) => Some(n.get_row()),
-            None => None,
-        };
+        let nn = next_row.map(|n| n.get_row());
         self.row.parse(
             &self.data,
             self.str_offset_size,

@@ -28,7 +28,7 @@ impl DnPe {
     pub fn pe<'a>(&'a self) -> Result<goblin::pe::PE<'a>> {
         match goblin::Object::parse(&self.data)? {
             goblin::Object::PE(pe) => Ok(pe),
-            _ => return Err(error::Error::UnsupportedBinaryFormat("main")),
+            _ => Err(error::Error::UnsupportedBinaryFormat("main")),
         }
     }
 
@@ -75,7 +75,7 @@ impl DnPe {
             &goblin::pe::options::ParseOptions { resolve_rva: true },
         ) {
             Some(s) => Ok(s),
-            None => return Err(crate::error::Error::UnresolvedRvaError(rva)),
+            None => Err(crate::error::Error::UnresolvedRvaError(rva)),
         }
     }
 
@@ -170,17 +170,17 @@ impl DnPe {
     ) -> Result<MetaData> {
         let version_offset = self.offset(metadata_rva + 16)?;
         let version = self.data
-            [version_offset..version_offset + metadata_struct.version_length.clone() as usize]
+            [version_offset..version_offset + metadata_struct.version_length as usize]
             .to_vec();
         let flags: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length.clone()),
+            &(metadata_rva + 16 + metadata_struct.version_length),
             &2,
         )?;
         let number_of_streams: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length.clone() + 2),
+            &(metadata_rva + 16 + metadata_struct.version_length + 2),
             &2,
         )?;
-        let struct_size = 16 + metadata_struct.version_length.clone() + 2 + 2;
+        let struct_size = 16 + metadata_struct.version_length + 2 + 2;
         let mut streams = std::collections::HashMap::new();
         if number_of_streams > 0 {
             let streams_table_rva = metadata_rva + struct_size;
@@ -329,7 +329,7 @@ impl ClrData {
         T: stream::meta_data_tables::mdtables::MDTableRowTrait + 'static,
     {
         let table = self.md_table(index.table())?;
-        Ok(table.row(index.row_index())?)
+        table.row(index.row_index())
     }
 
     pub fn functions(&self) -> &Vec<cil::cil::function::Function> {
