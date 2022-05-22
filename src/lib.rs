@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub mod cil;
+pub mod lang;
 pub mod error;
 pub mod stream;
 pub mod utils;
@@ -136,7 +136,7 @@ impl DnPe {
         })
     }
 
-    fn parse_functions(&self, metadata: &MetaData) -> Result<Vec<cil::cil::function::Function>> {
+    fn parse_functions(&self, metadata: &MetaData) -> Result<Vec<lang::cil::function::Function>> {
         let mut res = vec![];
         let method_def_table = metadata.md_table("MethodDef")?;
         for i in 0..method_def_table.row_count() {
@@ -157,10 +157,10 @@ impl DnPe {
         }
         Ok(res)
     }
-    fn parse_function(&self, row: &MethodDef) -> Result<cil::cil::function::Function> {
-        let mut reader = cil::cil::function::reader::Reader::new(&self.data);
+    fn parse_function(&self, row: &MethodDef) -> Result<lang::cil::function::Function> {
+        let mut reader = lang::cil::function::reader::Reader::new(&self.data);
         reader.seek(self.offset(row.rva)?)?;
-        cil::cil::function::Function::new(&mut reader)
+        lang::cil::function::Function::new(&mut reader)
     }
 
     fn new_metadata(
@@ -310,7 +310,7 @@ pub struct ClrData {
     //   blobs: Option<BlobHeap>,
     //    mdtables: Option<MetaDataTables>,
     pub flags: std::collections::BTreeSet<ClrHeaderFlags>,
-    pub functions: Vec<cil::cil::function::Function>,
+    pub functions: Vec<lang::cil::function::Function>,
 }
 
 impl ClrData {
@@ -332,7 +332,7 @@ impl ClrData {
         table.row(index.row_index())
     }
 
-    pub fn functions(&self) -> &Vec<cil::cil::function::Function> {
+    pub fn functions(&self) -> &Vec<lang::cil::function::Function> {
         &self.functions
     }
 
