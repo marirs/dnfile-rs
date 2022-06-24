@@ -329,7 +329,7 @@ impl ClrData {
         T: stream::meta_data_tables::mdtables::MDTableRowTrait + 'static,
     {
         let table = self.md_table(index.table())?;
-        table.row(index.row_index())
+        table.row(index.row_index()-1)
     }
 
     pub fn functions(&self) -> &Vec<lang::cil::function::Function> {

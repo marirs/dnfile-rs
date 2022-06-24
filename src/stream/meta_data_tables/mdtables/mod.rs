@@ -1630,7 +1630,7 @@ impl MDTableRowTrait for MethodImpl {
 
 #[derive(Debug, Clone, Default)]
 pub struct ModuleRef {
-    name: String,
+    pub name: String,
 }
 
 impl MDTableRowTrait for ModuleRef {
@@ -2739,11 +2739,12 @@ impl MetaDataTable {
     where
         T: MDTableRowTrait + 'static,
     {
-        self.get_row(i)?
-            .get_row()
+        let r = self.get_row(i)?;
+        let res = r.get_row()
             .as_any()
             .downcast_ref::<T>()
-            .ok_or_else(|| Error::RowIndexOutOfBound(i, self.row_count()))
+            .ok_or_else(|| Error::RowIndexOutOfBound(i, self.row_count()))?;
+        Ok(res)
     }
 }
 
