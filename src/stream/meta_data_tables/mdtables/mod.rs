@@ -1310,7 +1310,7 @@ impl MDTableRowTrait for ImplMap{
         self.mapping_flags = enums::ClrPinvokeMap::new(crate::utils::read_usize(&data[0..s1])?);
         self.member_forwarded.set(&data[s1..s2], tables)?;
         self.import_name = strings_heap.get_string(&data[s2..s3])?;
-        self.import_scope = codedindex::SimpleCodedIndex::new(vec!["MethodRef"], 0, &data[s3..s4], tables)?;
+        self.import_scope = codedindex::SimpleCodedIndex::new(vec!["ModuleRef"], 0, &data[s3..s4], tables)?;
         Ok(())
     }
 }

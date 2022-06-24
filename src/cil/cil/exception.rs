@@ -7,11 +7,11 @@ pub const FAT_SIZE: usize = 24;
 #[derive(Debug, Default, Clone, serde::Serialize)]
 pub struct ExceptionHandler{
     pub exception_type: usize,
-    pub try_start: i32,
-    pub try_end: i32,
-    pub filter_start: i32,
-    pub handler_start: i32,
-    pub handler_end: i32,
+    pub try_start: i64,
+    pub try_end: i64,
+    pub filter_start: i64,
+    pub handler_start: i64,
+    pub handler_end: i64,
     pub catch_type: Option<super::super::clr::token::Token>
 }
 

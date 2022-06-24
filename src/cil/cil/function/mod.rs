@@ -112,14 +112,15 @@ impl Function {
         let num_exceptions = total_size; // ExceptionHandler.FAT_SIZE
         for _ in 0..num_exceptions{
             let mut eh = super::exception::ExceptionHandler::new(reader.read_u32()? as usize);
-            eh.try_start = reader.read_i32()?;
-            eh.try_end = eh.try_start + reader.read_i32()?;
-            eh.handler_start = reader.read_i32()?;
-            eh.handler_end = eh.handler_start + reader.read_i32()?;
+            eh.try_start = reader.read_i32()? as i64;
+            let bb = reader.read_i32()?;
+            eh.try_end = eh.try_start + bb as i64;
+            eh.handler_start = reader.read_i32()? as i64;
+            eh.handler_end = eh.handler_start + reader.read_i32()? as i64;
             if eh.is_catch(){
                 eh.catch_type = Some(Token::new(reader.read_u32()? as usize));
             } else if eh.is_filter(){
-                eh.filter_start = reader.read_u32()? as i32;
+                eh.filter_start = reader.read_u32()? as i64;
             } else {
                 reader.read_u32()?;
             }
@@ -134,14 +135,14 @@ impl Function {
         reader.seek(pos)?;
         for _ in 0..num_exceptions{
             let mut eh = super::exception::ExceptionHandler::new(reader.read_u16()? as usize);
-            eh.try_start = reader.read_u16()? as i32;
-            eh.try_end = eh.try_start + reader.read_u8()? as i32;
-            eh.handler_start = reader.read_u16()? as i32;
-            eh.handler_end = eh.handler_start + reader.read_u8()? as i32;
+            eh.try_start = reader.read_u16()? as i64;
+            eh.try_end = eh.try_start + reader.read_u8()? as i64;
+            eh.handler_start = reader.read_u16()? as i64;
+            eh.handler_end = eh.handler_start + reader.read_u8()? as i64;
             if eh.is_catch(){
                 eh.catch_type = Some(Token::new(reader.read_u32()? as usize));
             } else if eh.is_filter(){
-                eh.filter_start = reader.read_u32()? as i32;
+                eh.filter_start = reader.read_u32()? as i64;
             } else {
                 reader.read_u32()?;
             }
