@@ -1,7 +1,7 @@
-use crate::Result;
+use crate::{error::Error, Result};
 
 #[derive(Debug, Clone)]
-pub enum CorTypeVisibility{
+pub enum CorTypeVisibility {
     NotPublic,
     Public,
     NestedPublic,
@@ -9,12 +9,12 @@ pub enum CorTypeVisibility{
     NestedFamily,
     NestedAssembly,
     NestedFamANDAssem,
-    NestedFamORAssem
+    NestedFamORAssem,
 }
 
-impl CorTypeVisibility{
-    pub fn new(val: usize) -> Self{
-        match val & 0x7{
+impl CorTypeVisibility {
+    pub fn new(val: usize) -> Self {
+        match val & 0x7 {
             1 => Self::Public,
             2 => Self::NestedPublic,
             3 => Self::NestedPrivate,
@@ -27,22 +27,22 @@ impl CorTypeVisibility{
     }
 }
 
-impl Default for CorTypeVisibility{
-    fn default() -> Self{
+impl Default for CorTypeVisibility {
+    fn default() -> Self {
         Self::NotPublic
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum CorTypeLayout{
+pub enum CorTypeLayout {
     AutoLayout,
     SequentialLayout,
-    ExplicitLayout
+    ExplicitLayout,
 }
 
-impl CorTypeLayout{
-    pub fn new(val: usize) -> Self{
-        match val & 0x18{
+impl CorTypeLayout {
+    pub fn new(val: usize) -> Self {
+        match val & 0x18 {
             0x8 => Self::SequentialLayout,
             0x10 => Self::ExplicitLayout,
             _ => Self::AutoLayout,
@@ -50,35 +50,35 @@ impl CorTypeLayout{
     }
 }
 
-impl Default for CorTypeLayout{
-    fn default() -> Self{
+impl Default for CorTypeLayout {
+    fn default() -> Self {
         Self::AutoLayout
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum CorTypeSemantics{
+pub enum CorTypeSemantics {
     Class,
-    Interface
+    Interface,
 }
 
-impl CorTypeSemantics{
-    pub fn new(val: usize) -> Self{
-        match val & 0x20{
+impl CorTypeSemantics {
+    pub fn new(val: usize) -> Self {
+        match val & 0x20 {
             0x20 => Self::Interface,
             _ => Self::Class,
         }
     }
 }
 
-impl Default for CorTypeSemantics{
-    fn default() -> Self{
+impl Default for CorTypeSemantics {
+    fn default() -> Self {
         Self::Class
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum CorTypeAttrFlags{
+pub enum CorTypeAttrFlags {
     Abstract,
     Sealed,
     SpecialName,
@@ -88,11 +88,11 @@ pub enum CorTypeAttrFlags{
     WindowsRuntime,
     HasSecurity,
     BeforeFieldInit,
-    Forwarder
+    Forwarder,
 }
 
-impl CorTypeAttrFlags{
-    pub fn new(val: usize) -> Vec<Self>{
+impl CorTypeAttrFlags {
+    pub fn new(val: usize) -> Vec<Self> {
         let mut res = vec![];
         if val & 0x00000080 != 0 {
             res.push(Self::Abstract);
@@ -129,16 +129,16 @@ impl CorTypeAttrFlags{
 }
 
 #[derive(Debug, Clone)]
-pub enum CorTypeStringFormat{
+pub enum CorTypeStringFormat {
     AnsiClass,
     UnicodeClass,
     AutoClass,
-    CustomFormatClass
+    CustomFormatClass,
 }
 
-impl CorTypeStringFormat{
-    pub fn new(val: usize) -> Self{
-        match val & 0x00030000{
+impl CorTypeStringFormat {
+    pub fn new(val: usize) -> Self {
+        match val & 0x00030000 {
             0x00010000 => Self::UnicodeClass,
             0x00020000 => Self::AutoClass,
             0x00030000 => Self::CustomFormatClass,
@@ -147,23 +147,23 @@ impl CorTypeStringFormat{
     }
 }
 
-impl Default for CorTypeStringFormat{
-    fn default() -> Self{
+impl Default for CorTypeStringFormat {
+    fn default() -> Self {
         Self::AnsiClass
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CorMethodCodeType{
+pub enum CorMethodCodeType {
     IL,
     Native,
     OPTIL,
-    Runtime
+    Runtime,
 }
 
-impl CorMethodCodeType{
-    pub fn new(value: usize) -> Self{
-        match value & 0x3{
+impl CorMethodCodeType {
+    pub fn new(value: usize) -> Self {
+        match value & 0x3 {
             1 => Self::Native,
             2 => Self::OPTIL,
             3 => Self::Runtime,
@@ -173,14 +173,14 @@ impl CorMethodCodeType{
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CorMethodManaged{
+pub enum CorMethodManaged {
     Unmanaged,
-    Managed
+    Managed,
 }
 
-impl CorMethodManaged{
-    pub fn new(value: usize) -> Self{
-        match value & 0x4{
+impl CorMethodManaged {
+    pub fn new(value: usize) -> Self {
+        match value & 0x4 {
             4 => Self::Unmanaged,
             _ => Self::Managed,
         }
@@ -188,7 +188,7 @@ impl CorMethodManaged{
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ClrMethodImpl{
+pub enum ClrMethodImpl {
     MethodCodeType(CorMethodCodeType),
     MethodManaged(CorMethodManaged),
     ForwardRef,
@@ -196,24 +196,24 @@ pub enum ClrMethodImpl{
     InternalCall,
     Synchronized,
     NoInlining,
-    MaxMethodImplVal
+    MaxMethodImplVal,
 }
-impl ClrMethodImpl{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrMethodImpl {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 0x10 != 0{
+        if value & 0x10 != 0 {
             res.push(Self::ForwardRef);
         }
-        if value & 0x080 != 0{
+        if value & 0x080 != 0 {
             res.push(Self::PreserveSig);
         }
-        if value & 0x1000 != 0{
+        if value & 0x1000 != 0 {
             res.push(Self::InternalCall);
         }
-        if value & 0x20 != 0{
+        if value & 0x20 != 0 {
             res.push(Self::NoInlining);
         }
-        if value & 0x8 != 0{
+        if value & 0x8 != 0 {
             res.push(Self::MaxMethodImplVal);
         }
         res.push(Self::MethodCodeType(CorMethodCodeType::new(value)));
@@ -223,18 +223,22 @@ impl ClrMethodImpl{
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct ClrTypeAttr{
+pub struct ClrTypeAttr {
     visibility: CorTypeVisibility,
     layout: CorTypeLayout,
-    class_semantics:  CorTypeSemantics,
+    class_semantics: CorTypeSemantics,
     flags: Vec<CorTypeAttrFlags>,
-    string_format: CorTypeStringFormat
+    string_format: CorTypeStringFormat,
 }
 
-impl ClrTypeAttr{
-    pub fn set(&mut self, data: &[u8]) -> Result<()>{
-        if data.len() != 4{
-            return Err(crate::error::Error::FormatError(format!("CtrlTypeAttr incorrect size {} {}", data.len(), 4)));
+impl ClrTypeAttr {
+    pub fn set(&mut self, data: &[u8]) -> Result<()> {
+        if data.len() != 4 {
+            return Err(Error::FormatError(format!(
+                "CtrlTypeAttr incorrect size {} {}",
+                data.len(),
+                4
+            )));
         }
         let val = crate::utils::read_usize(data)?;
         self.visibility = CorTypeVisibility::new(val);
@@ -247,7 +251,7 @@ impl ClrTypeAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum CorFieldAccess{
+pub enum CorFieldAccess {
     PrivateScope,
     Private,
     FamANDAssem,
@@ -255,12 +259,12 @@ pub enum CorFieldAccess{
     Family,
     FamORAssem,
     Public,
-    Unknown1
+    Unknown1,
 }
 
-impl CorFieldAccess{
-    pub fn new(value: usize) -> Self{
-        match value & 7{
+impl CorFieldAccess {
+    pub fn new(value: usize) -> Self {
+        match value & 7 {
             1 => Self::Private,
             2 => Self::FamANDAssem,
             3 => Self::Assembly,
@@ -268,13 +272,13 @@ impl CorFieldAccess{
             5 => Self::FamORAssem,
             6 => Self::Public,
             7 => Self::Unknown1,
-            _ => Self::PrivateScope
+            _ => Self::PrivateScope,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrFieldAttr{
+pub enum ClrFieldAttr {
     FieldAccess(CorFieldAccess),
     Static,
     InitOnly,
@@ -285,41 +289,41 @@ pub enum ClrFieldAttr{
     RTSpecialName,
     HasFieldMarshal,
     HasDefault,
-    HasFieldRVA
+    HasFieldRVA,
 }
 
-impl ClrFieldAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrFieldAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
         res.push(Self::FieldAccess(CorFieldAccess::new(value)));
-        if value & 0x10 != 0{
+        if value & 0x10 != 0 {
             res.push(Self::Static);
         }
-        if value & 0x20 != 0{
+        if value & 0x20 != 0 {
             res.push(Self::InitOnly);
         }
-        if value & 0x40 != 0{
+        if value & 0x40 != 0 {
             res.push(Self::Literal);
         }
-        if value & 0x80 != 0{
+        if value & 0x80 != 0 {
             res.push(Self::NotSerialized);
         }
-        if value & 0x200 != 0{
+        if value & 0x200 != 0 {
             res.push(Self::SpecialName);
         }
-        if value & 0x2000 != 0{
+        if value & 0x2000 != 0 {
             res.push(Self::PinvokeImpl);
         }
-        if value & 0x100 != 0{
+        if value & 0x100 != 0 {
             res.push(Self::HasFieldRVA);
         }
-        if value & 0x400 != 0{
+        if value & 0x400 != 0 {
             res.push(Self::RTSpecialName);
         }
-        if value & 0x1000 != 0{
+        if value & 0x1000 != 0 {
             res.push(Self::HasFieldMarshal);
         }
-        if value & 0x8000 != 0{
+        if value & 0x8000 != 0 {
             res.push(Self::HasDefault);
         }
         res
@@ -327,7 +331,7 @@ impl ClrFieldAttr{
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CorMethodMemberAccess{
+pub enum CorMethodMemberAccess {
     PrivateScope,
     Private,
     FamANDAssem,
@@ -335,12 +339,12 @@ pub enum CorMethodMemberAccess{
     Family,
     FamORAssem,
     Public,
-    Unknown1
+    Unknown1,
 }
 
-impl CorMethodMemberAccess{
-    pub fn new(value: usize) -> Self{
-        match value & 0x7{
+impl CorMethodMemberAccess {
+    pub fn new(value: usize) -> Self {
+        match value & 0x7 {
             1 => Self::Private,
             2 => Self::FamANDAssem,
             3 => Self::Assem,
@@ -348,13 +352,13 @@ impl CorMethodMemberAccess{
             5 => Self::FamORAssem,
             6 => Self::Public,
             7 => Self::Unknown1,
-            _ => Self::PrivateScope
+            _ => Self::PrivateScope,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CorMethodAttrFlag{
+pub enum CorMethodAttrFlag {
     Static,
     Final,
     Virtual,
@@ -366,46 +370,46 @@ pub enum CorMethodAttrFlag{
     UnmanagedExport,
     RTSpecialName,
     HasSecurity,
-    RequireSecObject
+    RequireSecObject,
 }
 
-impl CorMethodAttrFlag{
-    pub fn new(value: usize) -> Vec<Self>{
+impl CorMethodAttrFlag {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 0x10 != 0{
+        if value & 0x10 != 0 {
             res.push(Self::Static);
         }
-        if value & 0x20 != 0{
+        if value & 0x20 != 0 {
             res.push(Self::Final);
         }
-        if value & 0x40 != 0{
+        if value & 0x40 != 0 {
             res.push(Self::Virtual);
         }
-        if value & 0x80 != 0{
+        if value & 0x80 != 0 {
             res.push(Self::HideBySig);
         }
-        if value & 0x200 != 0{
+        if value & 0x200 != 0 {
             res.push(Self::CheckAccessOnOverride);
         }
-        if value & 0x400 != 0{
+        if value & 0x400 != 0 {
             res.push(Self::Abstract);
         }
-        if value & 0x800 != 0{
+        if value & 0x800 != 0 {
             res.push(Self::SpecialName);
         }
-        if value & 0x2000 != 0{
+        if value & 0x2000 != 0 {
             res.push(Self::PinvokeImpl);
         }
-        if value & 0x8 != 0{
+        if value & 0x8 != 0 {
             res.push(Self::UnmanagedExport);
         }
-        if value & 0x1000 != 0{
+        if value & 0x1000 != 0 {
             res.push(Self::RTSpecialName);
         }
-        if value & 0x4000 != 0{
+        if value & 0x4000 != 0 {
             res.push(Self::HasSecurity);
         }
-        if value & 0x8000 != 0{
+        if value & 0x8000 != 0 {
             res.push(Self::RTSpecialName);
         }
         res
@@ -413,32 +417,32 @@ impl CorMethodAttrFlag{
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum CorMethodVtableLayout{
+pub enum CorMethodVtableLayout {
     ReuseSlot,
-    NewSlot
+    NewSlot,
 }
 
-impl CorMethodVtableLayout{
-    pub fn new(value: usize) -> Self{
+impl CorMethodVtableLayout {
+    pub fn new(value: usize) -> Self {
         match value & 0x100 {
             0x100 => Self::NewSlot,
-            _ => Self::ReuseSlot
+            _ => Self::ReuseSlot,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ClrMethodAttr{
+pub enum ClrMethodAttr {
     MemberAccess(CorMethodMemberAccess),
     AttrFlag(CorMethodAttrFlag),
-    VtableLayout(CorMethodVtableLayout)
+    VtableLayout(CorMethodVtableLayout),
 }
 
-impl ClrMethodAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrMethodAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
         res.push(Self::MemberAccess(CorMethodMemberAccess::new(value)));
-        for f in CorMethodAttrFlag::new(value){
+        for f in CorMethodAttrFlag::new(value) {
             res.push(Self::AttrFlag(f));
         }
         res.push(Self::VtableLayout(CorMethodVtableLayout::new(value)));
@@ -447,30 +451,30 @@ impl ClrMethodAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrParamAttr{
+pub enum ClrParamAttr {
     In,
     Out,
     Optional,
     HasDefault,
-    HasFieldMarshal
+    HasFieldMarshal,
 }
 
-impl ClrParamAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrParamAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 1 != 0{
+        if value & 1 != 0 {
             res.push(Self::In);
         }
-        if value & 2 != 0{
+        if value & 2 != 0 {
             res.push(Self::Out);
         }
-        if value & 0x10 != 0{
+        if value & 0x10 != 0 {
             res.push(Self::Optional);
         }
-        if value & 0x1000 != 0{
+        if value & 0x1000 != 0 {
             res.push(Self::HasDefault);
         }
-        if value & 0x2000 != 0{
+        if value & 0x2000 != 0 {
             res.push(Self::HasFieldMarshal);
         }
         res
@@ -478,42 +482,41 @@ impl ClrParamAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrEventAttr{
+pub enum ClrEventAttr {
     SpecialName,
-    RTSpecialName
+    RTSpecialName,
 }
 
-impl ClrEventAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrEventAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 0x200 != 0{
+        if value & 0x200 != 0 {
             res.push(Self::SpecialName);
         }
-        if value & 0x400 != 0{
+        if value & 0x400 != 0 {
             res.push(Self::RTSpecialName);
         }
         res
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub enum ClrPropertyAttr{
+pub enum ClrPropertyAttr {
     SpecialName,
     RTSpecialName,
-    HasDefault
+    HasDefault,
 }
 
-impl ClrPropertyAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrPropertyAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 0x200 != 0{
+        if value & 0x200 != 0 {
             res.push(Self::SpecialName);
         }
-        if value & 0x400 != 0{
+        if value & 0x400 != 0 {
             res.push(Self::RTSpecialName);
         }
-        if value & 0x1000 != 0{
+        if value & 0x1000 != 0 {
             res.push(Self::HasDefault);
         }
         res
@@ -521,97 +524,95 @@ impl ClrPropertyAttr{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrMethodSemanticsAttr{
+pub enum ClrMethodSemanticsAttr {
     Setter,
     Getter,
     Other,
     AddOn,
     RemoveOn,
-    Fire
+    Fire,
 }
 
-impl ClrMethodSemanticsAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrMethodSemanticsAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 0x1 != 0{
+        if value & 0x1 != 0 {
             res.push(Self::Setter);
         }
-        if value & 0x2 != 0{
+        if value & 0x2 != 0 {
             res.push(Self::Getter);
         }
-        if value & 0x4 != 0{
+        if value & 0x4 != 0 {
             res.push(Self::Other);
         }
-        if value & 0x8 != 0{
+        if value & 0x8 != 0 {
             res.push(Self::AddOn);
         }
-        if value & 0x10 != 0{
+        if value & 0x10 != 0 {
             res.push(Self::RemoveOn);
         }
-        if value & 0x20 != 0{
+        if value & 0x20 != 0 {
             res.push(Self::Fire);
         }
         res
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub enum CorPinvokeMapCharSet{
+pub enum CorPinvokeMapCharSet {
     NotSpec,
     Ansi,
     Unicode,
-    Auto
+    Auto,
 }
 
-impl CorPinvokeMapCharSet{
-    pub fn new(value: usize) -> Self{
-        match value & 6{
+impl CorPinvokeMapCharSet {
+    pub fn new(value: usize) -> Self {
+        match value & 6 {
             2 => Self::Ansi,
             4 => Self::Unicode,
             6 => Self::Auto,
-            _ => Self::NotSpec
+            _ => Self::NotSpec,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum  CorPinvokeBestFit{
+pub enum CorPinvokeBestFit {
     UseAssem,
     Enabled,
-    Disabled
+    Disabled,
 }
 
-impl CorPinvokeBestFit{
-    pub fn new(value: usize) -> Self{
-        match value & 0x30{
+impl CorPinvokeBestFit {
+    pub fn new(value: usize) -> Self {
+        match value & 0x30 {
             0x10 => Self::Enabled,
             0x20 => Self::Disabled,
-            _ => Self::UseAssem
+            _ => Self::UseAssem,
         }
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub enum CorPinvokeThrowOnUnmappableChar{
+pub enum CorPinvokeThrowOnUnmappableChar {
     UseAssem,
     Enabled,
-    Disabled
+    Disabled,
 }
 
-impl CorPinvokeThrowOnUnmappableChar{
-    pub fn new(value: usize) -> Self{
-        match value & 0x3000{
+impl CorPinvokeThrowOnUnmappableChar {
+    pub fn new(value: usize) -> Self {
+        match value & 0x3000 {
             0x1000 => Self::Enabled,
             0x2000 => Self::Disabled,
-            _ => Self::UseAssem
+            _ => Self::UseAssem,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum CorPinvokeCallConv{
+pub enum CorPinvokeCallConv {
     None,
     Winapi,
     Cdecl,
@@ -619,12 +620,12 @@ pub enum CorPinvokeCallConv{
     Thiscall,
     Fastcall,
     Unknown1,
-    Unknown2
+    Unknown2,
 }
 
-impl CorPinvokeCallConv{
-    pub fn new(value: usize) -> Self{
-        match value & 0x700{
+impl CorPinvokeCallConv {
+    pub fn new(value: usize) -> Self {
+        match value & 0x700 {
             0x100 => Self::Winapi,
             0x200 => Self::Cdecl,
             0x300 => Self::Stdcall,
@@ -632,32 +633,34 @@ impl CorPinvokeCallConv{
             0x500 => Self::Fastcall,
             0x600 => Self::Unknown1,
             0x700 => Self::Unknown2,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrPinvokeMap{
+pub enum ClrPinvokeMap {
     CharSet(CorPinvokeMapCharSet),
     BestFit(CorPinvokeBestFit),
     ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar),
     CallConv(CorPinvokeCallConv),
     NoMangle,
-    SupportsLastError
+    SupportsLastError,
 }
 
-impl ClrPinvokeMap{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrPinvokeMap {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
         res.push(Self::CharSet(CorPinvokeMapCharSet::new(value)));
         res.push(Self::BestFit(CorPinvokeBestFit::new(value)));
-        res.push(Self::ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar::new(value)));
+        res.push(Self::ThrowOnUnmappableChar(
+            CorPinvokeThrowOnUnmappableChar::new(value),
+        ));
         res.push(Self::CallConv(CorPinvokeCallConv::new(value)));
-        if value & 1 != 0{
+        if value & 1 != 0 {
             res.push(Self::NoMangle);
         }
-        if value & 0x40 != 0{
+        if value & 0x40 != 0 {
             res.push(Self::SupportsLastError);
         }
         res
@@ -665,36 +668,36 @@ impl ClrPinvokeMap{
 }
 
 #[derive(Debug, Clone)]
-pub enum AssemblyHashAlgorithm{
+pub enum AssemblyHashAlgorithm {
     None,
     Md5,
     Sha1,
     Sha256,
     Sha384,
-    Sha512
+    Sha512,
 }
 
-impl AssemblyHashAlgorithm{
-    pub fn new(val: usize) -> AssemblyHashAlgorithm{
-        match val{
+impl AssemblyHashAlgorithm {
+    pub fn new(val: usize) -> AssemblyHashAlgorithm {
+        match val {
             0x8003 => Self::Md5,
             0x8004 => Self::Sha1,
             0x800c => Self::Sha256,
             0x800d => Self::Sha384,
             0x800e => Self::Sha512,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
 
-impl Default for AssemblyHashAlgorithm{
-    fn default() -> Self{
+impl Default for AssemblyHashAlgorithm {
+    fn default() -> Self {
         Self::None
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum CorAssemblyFlagsPA{
+pub enum CorAssemblyFlagsPA {
     PaNone,
     PaMSIL,
     PaX86,
@@ -702,12 +705,12 @@ pub enum CorAssemblyFlagsPA{
     PaAMD64,
     PaUnknown1,
     PaUnknown2,
-    PaUnknown3
+    PaUnknown3,
 }
 
-impl CorAssemblyFlagsPA{
-    pub fn new(value: usize) -> Self{
-        match value & 0x70{
+impl CorAssemblyFlagsPA {
+    pub fn new(value: usize) -> Self {
+        match value & 0x70 {
             0x0010 => Self::PaMSIL,
             0x0020 => Self::PaX86,
             0x0030 => Self::PaIA64,
@@ -715,37 +718,37 @@ impl CorAssemblyFlagsPA{
             0x0050 => Self::PaUnknown1,
             0x0060 => Self::PaUnknown2,
             0x0070 => Self::PaUnknown3,
-            _ => Self::PaNone
+            _ => Self::PaNone,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrAssemblyFlags{
+pub enum ClrAssemblyFlags {
     PublicKey,
     PA(CorAssemblyFlagsPA),
     PaSpecified,
     EnableJITcompileTracking,
     DisableJITcompileOptimizer,
-    Retargetable
+    Retargetable,
 }
 
-impl ClrAssemblyFlags{
-    pub fn new(value: usize) -> Vec<ClrAssemblyFlags>{
+impl ClrAssemblyFlags {
+    pub fn new(value: usize) -> Vec<ClrAssemblyFlags> {
         let mut res = vec![];
-        if value & 1 != 0{
+        if value & 1 != 0 {
             res.push(ClrAssemblyFlags::PublicKey);
         }
-        if value & 0x0100 != 0{
+        if value & 0x0100 != 0 {
             res.push(ClrAssemblyFlags::Retargetable);
         }
-        if value & 0x4000 != 0{
+        if value & 0x4000 != 0 {
             res.push(ClrAssemblyFlags::DisableJITcompileOptimizer);
         }
-        if value & 0x8000 != 0{
+        if value & 0x8000 != 0 {
             res.push(ClrAssemblyFlags::EnableJITcompileTracking);
         }
-        if value & 0x0080 != 0{
+        if value & 0x0080 != 0 {
             res.push(ClrAssemblyFlags::PaSpecified);
             res.push(ClrAssemblyFlags::PA(CorAssemblyFlagsPA::new(value)));
         }
@@ -754,15 +757,15 @@ impl ClrAssemblyFlags{
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrFileFlags{
+pub enum ClrFileFlags {
     ContainsMetaData,
-    ContainsNoMetaData
+    ContainsNoMetaData,
 }
 
-impl ClrFileFlags{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrFileFlags {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
-        if value & 1 != 0{
+        if value & 1 != 0 {
             res.push(Self::ContainsNoMetaData);
         } else {
             res.push(Self::ContainsMetaData);
@@ -772,7 +775,7 @@ impl ClrFileFlags{
 }
 
 #[derive(Debug, Clone)]
-pub enum CorManifestResourceVisibility{
+pub enum CorManifestResourceVisibility {
     None,
     Public,
     Private,
@@ -780,12 +783,12 @@ pub enum CorManifestResourceVisibility{
     Unknown2,
     Unknown3,
     Unknown4,
-    Unknown5
+    Unknown5,
 }
 
-impl CorManifestResourceVisibility{
-    pub fn new(value: usize) -> Self{
-        match  value & 7{
+impl CorManifestResourceVisibility {
+    pub fn new(value: usize) -> Self {
+        match value & 7 {
             1 => Self::Public,
             2 => Self::Private,
             3 => Self::Unknown1,
@@ -793,18 +796,18 @@ impl CorManifestResourceVisibility{
             5 => Self::Unknown3,
             6 => Self::Unknown4,
             7 => Self::Unknown5,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
 
 #[derive(Debug, Clone)]
-pub enum ClrManifestResourceFlags{
-    Visibility(CorManifestResourceVisibility)
+pub enum ClrManifestResourceFlags {
+    Visibility(CorManifestResourceVisibility),
 }
 
-impl ClrManifestResourceFlags{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrManifestResourceFlags {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
         res.push(Self::Visibility(CorManifestResourceVisibility::new(value)));
         res
@@ -812,56 +815,56 @@ impl ClrManifestResourceFlags{
 }
 
 #[derive(Debug, Clone)]
-pub enum CorGenericParamVariance{
+pub enum CorGenericParamVariance {
     NonVariant,
     Covariant,
     Contravariant,
-    Unknown1
+    Unknown1,
 }
 
-impl CorGenericParamVariance{
-    pub fn new(value: usize) -> Self{
-        match  value & 3{
+impl CorGenericParamVariance {
+    pub fn new(value: usize) -> Self {
+        match value & 3 {
             1 => Self::Covariant,
             2 => Self::Contravariant,
             3 => Self::Unknown1,
-            _ => Self::NonVariant
+            _ => Self::NonVariant,
         }
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub enum CorGenericParamSpecialConstraint{
+pub enum CorGenericParamSpecialConstraint {
     NoSpecialConstraint,
     ReferenceTypeConstraint,
     NotNullableValueTypeConstraint,
-    DefaultConstructorConstraint
+    DefaultConstructorConstraint,
 }
 
-impl CorGenericParamSpecialConstraint{
-    pub fn new(value: usize) -> Self{
-        match  value & 0x1c{
+impl CorGenericParamSpecialConstraint {
+    pub fn new(value: usize) -> Self {
+        match value & 0x1c {
             4 => Self::ReferenceTypeConstraint,
             8 => Self::NotNullableValueTypeConstraint,
             0x10 => Self::DefaultConstructorConstraint,
-            _ => Self::NoSpecialConstraint
+            _ => Self::NoSpecialConstraint,
         }
     }
 }
 
-
 #[derive(Debug, Clone)]
-pub enum ClrGenericParamAttr{
+pub enum ClrGenericParamAttr {
     Variance(CorGenericParamVariance),
-    SpecialConstraint(CorGenericParamSpecialConstraint)
+    SpecialConstraint(CorGenericParamSpecialConstraint),
 }
 
-impl ClrGenericParamAttr{
-    pub fn new(value: usize) -> Vec<Self>{
+impl ClrGenericParamAttr {
+    pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
         res.push(Self::Variance(CorGenericParamVariance::new(value)));
-        res.push(Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value)));
+        res.push(Self::SpecialConstraint(
+            CorGenericParamSpecialConstraint::new(value),
+        ));
         res
     }
 }
