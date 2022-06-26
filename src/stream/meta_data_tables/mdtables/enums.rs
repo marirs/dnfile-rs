@@ -294,8 +294,8 @@ pub enum ClrFieldAttr {
 
 impl ClrFieldAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::FieldAccess(CorFieldAccess::new(value)));
+        let mut res = vec![Self::FieldAccess(CorFieldAccess::new(value))];
+
         if value & 0x10 != 0 {
             res.push(Self::Static);
         }
@@ -440,8 +440,8 @@ pub enum ClrMethodAttr {
 
 impl ClrMethodAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::MemberAccess(CorMethodMemberAccess::new(value)));
+        let mut res = vec![Self::MemberAccess(CorMethodMemberAccess::new(value))];
+
         for f in CorMethodAttrFlag::new(value) {
             res.push(Self::AttrFlag(f));
         }
@@ -650,13 +650,13 @@ pub enum ClrPinvokeMap {
 
 impl ClrPinvokeMap {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::CharSet(CorPinvokeMapCharSet::new(value)));
-        res.push(Self::BestFit(CorPinvokeBestFit::new(value)));
-        res.push(Self::ThrowOnUnmappableChar(
-            CorPinvokeThrowOnUnmappableChar::new(value),
-        ));
-        res.push(Self::CallConv(CorPinvokeCallConv::new(value)));
+        let mut res = vec![
+            Self::CharSet(CorPinvokeMapCharSet::new(value)),
+            Self::BestFit(CorPinvokeBestFit::new(value)),
+            Self::ThrowOnUnmappableChar(CorPinvokeThrowOnUnmappableChar::new(value)),
+            Self::CallConv(CorPinvokeCallConv::new(value)),
+        ];
+
         if value & 1 != 0 {
             res.push(Self::NoMangle);
         }
@@ -736,6 +736,7 @@ pub enum ClrAssemblyFlags {
 impl ClrAssemblyFlags {
     pub fn new(value: usize) -> Vec<ClrAssemblyFlags> {
         let mut res = vec![];
+
         if value & 1 != 0 {
             res.push(ClrAssemblyFlags::PublicKey);
         }
@@ -765,6 +766,7 @@ pub enum ClrFileFlags {
 impl ClrFileFlags {
     pub fn new(value: usize) -> Vec<Self> {
         let mut res = vec![];
+
         if value & 1 != 0 {
             res.push(Self::ContainsNoMetaData);
         } else {
@@ -808,9 +810,7 @@ pub enum ClrManifestResourceFlags {
 
 impl ClrManifestResourceFlags {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::Visibility(CorManifestResourceVisibility::new(value)));
-        res
+        vec![Self::Visibility(CorManifestResourceVisibility::new(value))]
     }
 }
 
@@ -860,11 +860,9 @@ pub enum ClrGenericParamAttr {
 
 impl ClrGenericParamAttr {
     pub fn new(value: usize) -> Vec<Self> {
-        let mut res = vec![];
-        res.push(Self::Variance(CorGenericParamVariance::new(value)));
-        res.push(Self::SpecialConstraint(
-            CorGenericParamSpecialConstraint::new(value),
-        ));
-        res
+        vec![
+            Self::Variance(CorGenericParamVariance::new(value)),
+            Self::SpecialConstraint(CorGenericParamSpecialConstraint::new(value)),
+        ]
     }
 }

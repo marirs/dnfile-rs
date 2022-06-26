@@ -1,11 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-pub mod lang;
 pub mod error;
+pub mod lang;
 pub mod stream;
 pub mod utils;
 
-use crate::{stream::meta_data_tables::mdtables::{enums::*, *}, error::Error};
+use crate::{
+    error::Error,
+    stream::meta_data_tables::mdtables::{enums::*, *},
+};
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
@@ -40,19 +43,11 @@ impl DnPe {
         };
         let opt_header = match res.pe()?.header.optional_header {
             Some(oh) => oh,
-            None => {
-                return Err(Error::UnsupportedBinaryFormat(
-                    "optional header absence",
-                ))
-            }
+            None => return Err(Error::UnsupportedBinaryFormat("optional header absence")),
         };
         let clr_directory = match opt_header.data_directories.get_clr_runtime_header() {
             Some(oh) => oh,
-            None => {
-                return Err(Error::UnsupportedBinaryFormat(
-                    "ClR runtime header absence",
-                ))
-            }
+            None => return Err(Error::UnsupportedBinaryFormat("ClR runtime header absence")),
         };
         let clr_struct: ClrStruct = res.get_data(
             &clr_directory.virtual_address,
@@ -172,10 +167,8 @@ impl DnPe {
         let version = self.data
             [version_offset..version_offset + metadata_struct.version_length as usize]
             .to_vec();
-        let flags: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length),
-            &2,
-        )?;
+        let flags: u16 =
+            self.get_data(&(metadata_rva + 16 + metadata_struct.version_length), &2)?;
         let number_of_streams: u16 = self.get_data(
             &(metadata_rva + 16 + metadata_struct.version_length + 2),
             &2,
@@ -329,7 +322,7 @@ impl ClrData {
         T: stream::meta_data_tables::mdtables::MDTableRowTrait + 'static,
     {
         let table = self.md_table(index.table())?;
-        table.row(index.row_index()-1)
+        table.row(index.row_index() - 1)
     }
 
     pub fn functions(&self) -> &Vec<lang::cil::function::Function> {

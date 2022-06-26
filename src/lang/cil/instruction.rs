@@ -86,6 +86,12 @@ pub struct Instruction {
     pub operand_bytes: Vec<u8>,
 }
 
+impl Default for Instruction {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Instruction {
     pub fn new() -> Self {
         Self {
@@ -139,10 +145,10 @@ impl Instruction {
         .contains(&opcode.operand_type)
         {
             opcode.size() + 1
-        } else if vec![OperandType::InlineNone, OperandType::InlinePhi]
-            .contains(&opcode.operand_type)
-        {
-            opcode.size()
+        // } else if vec![OperandType::InlineNone, OperandType::InlinePhi]
+        //     .contains(&opcode.operand_type)
+        // {
+        //     opcode.size()
         } else {
             opcode.size()
         }

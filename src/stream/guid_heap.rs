@@ -14,10 +14,7 @@ impl GuidHeap {
         }
         let offset = (index - 1) * size;
         if offset + size > self.data.len() {
-            return Err(Error::GuidHeapReadOutOfBound(
-                index,
-                self.data.len(),
-            ));
+            return Err(Error::GuidHeapReadOutOfBound(index, self.data.len()));
         }
         let guid_buf = &self.data[offset..offset + size];
         Ok(uuid::Uuid::from_slice(guid_buf)?)

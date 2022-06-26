@@ -131,9 +131,9 @@ impl Function {
             eh.try_end = eh.try_start + bb as i64;
             eh.handler_start = reader.read_i32()? as i64;
             eh.handler_end = eh.handler_start + reader.read_i32()? as i64;
-            if eh.is_catch(){
+            if eh.is_catch() {
                 eh.catch_type = Some(Token::new(reader.read_u32()? as usize));
-            } else if eh.is_filter(){
+            } else if eh.is_filter() {
                 eh.filter_start = reader.read_u32()? as i64;
             } else {
                 reader.read_u32()?;
@@ -153,9 +153,9 @@ impl Function {
             eh.try_end = eh.try_start + reader.read_u8()? as i64;
             eh.handler_start = reader.read_u16()? as i64;
             eh.handler_end = eh.handler_start + reader.read_u8()? as i64;
-            if eh.is_catch(){
+            if eh.is_catch() {
                 eh.catch_type = Some(Token::new(reader.read_u32()? as usize));
-            } else if eh.is_filter(){
+            } else if eh.is_filter() {
                 eh.filter_start = reader.read_u32()? as i64;
             } else {
                 reader.read_u32()?;

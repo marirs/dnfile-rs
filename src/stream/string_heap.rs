@@ -9,10 +9,7 @@ pub struct StringHeap {
 impl StringHeap {
     pub fn get(&self, index: usize) -> Result<String> {
         if index >= self.data.len() {
-            return Err(Error::StringHeapReadOutOfBound(
-                index,
-                self.data.len(),
-            ));
+            return Err(Error::StringHeapReadOutOfBound(index, self.data.len()));
         }
         let mut res_buf = vec![];
         for i in index..self.data.len() {
