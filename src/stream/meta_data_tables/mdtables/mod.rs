@@ -160,12 +160,35 @@ pub trait MDTableRowTrait {
         blobss_heap: &Option<&crate::stream::ClrStream>,
         guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()>;
+    fn parse2(
+        &mut self,
+        data: &Vec<u8>,
+        str_offset_size: usize,
+        guids_offset_size: usize,
+        blobs_offset_size: usize,
+        tables_row_counts: &Vec<usize>,
+        tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+        next_row: Option<&dyn MDTableRowTrait>,
+        strings_heap: &Option<&crate::stream::ClrStream>,
+        blobss_heap: &Option<&crate::stream::ClrStream>,
+        guids_heap: &Option<&crate::stream::ClrStream>,
+    ) -> Result<()>{
+        Ok(())
+    }
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
 pub trait MDTableRowTraitT {
     fn size(&self) -> usize;
     fn parse(
+        &mut self,
+        tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+        next_row: Option<&dyn MDTableRowTraitT>,
+        strings_heap: &Option<&crate::stream::ClrStream>,
+        blobss_heap: &Option<&crate::stream::ClrStream>,
+        guids_heap: &Option<&crate::stream::ClrStream>,
+    ) -> Result<()>;
+    fn parse2(
         &mut self,
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTraitT>,
@@ -212,6 +235,29 @@ where
     ) -> Result<()> {
         let nn = next_row.map(|n| n.get_row());
         self.row.parse(
+            &self.data,
+            self.str_offset_size,
+            self.guids_offset_size,
+            self.blobs_offset_size,
+            &self.tables_row_counts,
+            tables,
+            nn,
+            strings_heap,
+            blobss_heap,
+            guids_heap,
+        )
+    }
+
+    fn parse2(
+        &mut self,
+        tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+        next_row: Option<&dyn MDTableRowTraitT>,
+        strings_heap: &Option<&crate::stream::ClrStream>,
+        blobss_heap: &Option<&crate::stream::ClrStream>,
+        guids_heap: &Option<&crate::stream::ClrStream>,
+    ) -> Result<()> {
+        let nn = next_row.map(|n| n.get_row());
+        self.row.parse2(
             &self.data,
             self.str_offset_size,
             self.guids_offset_size,
@@ -381,11 +427,11 @@ impl MDTableRowTrait for TypeRef {
 #[derive(Debug, Clone, Default)]
 pub struct TypeDef {
     flags: enums::ClrTypeAttr,
-    type_name: String,
-    type_namespace: String,
+    pub type_name: String,
+    pub type_namespace: String,
     extends: codedindex::TypeDefOrRef,
-    field_list: Vec<Field>,
-    method_list: Vec<MethodDef>,
+    field_list: Vec<codedindex::SimpleCodedIndex>, //Field
+    pub method_list: Vec<codedindex::SimpleCodedIndex>, //MethodDef
 }
 
 impl MDTableRowTrait for TypeDef {
@@ -424,27 +470,68 @@ impl MDTableRowTrait for TypeDef {
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
         let s1 = 4;
-        let s2 = str_offset_size;
-        let s3 = str_offset_size;
-        let s4 = codedindex::clr_coded_index_struct_size(
+        let s2 = s1 + str_offset_size;
+        let s3 = s2 + str_offset_size;
+        let s4 = s3 + codedindex::clr_coded_index_struct_size(
             self.extends.tag_bits,
             &self.extends.table_names,
             tables_row_counts,
         );
-        let _s5 = codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
-        let _s6 = codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
+        let s5 = s4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
+        let s6 = s5 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
             return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags.set(&data[0..s1])?;
-        self.type_name = strings_heap.get_string(&data[s1..s1 + s2])?;
-        self.type_namespace = strings_heap.get_string(&data[s1 + s2..s1 + s2 + s3])?;
+        self.type_name = strings_heap.get_string(&data[s1 .. s2])?;
+        self.type_namespace = strings_heap.get_string(&data[s2..s3])?;
         self.extends
-            .set(&data[s1 + s2 + s3..s1 + s2 + s3 + s4], tables)?;
-        self.field_list = vec![];
-        self.method_list = vec![];
+            .set(&data[s3..s4], tables)?;
+        self.field_list = vec![codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[s4..s5], tables)?];
+        self.method_list = vec![codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &data[s5..s6], tables)?];
+        Ok(())
+    }
+
+    fn parse2(&mut self,
+        _data: &Vec<u8>,
+        _str_offset_size: usize,
+        _guids_offset_size: usize,
+        _blobs_offset_size: usize,
+        _tables_row_counts: &Vec<usize>,
+        tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+        next_row: Option<&dyn MDTableRowTrait>,
+        _strings_heap: &Option<&crate::stream::ClrStream>,
+        _blobs_heap: &Option<&crate::stream::ClrStream>,
+        _guids_heap: &Option<&crate::stream::ClrStream>,
+    ) -> Result<()>{
+        let field_row_count = tables.get(&table_name_2_index("Field")?).ok_or_else(|| Error::IncorrectTableRequested("Field", file!(), line!()))?.row_count();
+        let method_def_row_count = tables.get(&table_name_2_index("MethodDef")?).ok_or_else(|| Error::IncorrectTableRequested("MethodDef", file!(), line!()))?.row_count();
+        let (first_field_index, first_method_index) = (self.field_list[0].row_index(), self.method_list[0].row_index());
+        let (last_field_index, last_method_index) = if let Some(nr) = next_row{
+            let nnr = nr.as_any()
+                .downcast_ref::<TypeDef>()
+                .ok_or_else(|| Error::IncorrectCastTo("TypeDef", file!(), line!()))?;
+            (std::cmp::min(field_row_count, nnr.field_list[0].row_index()), std::cmp::min(method_def_row_count, nnr.method_list[0].row_index()))
+        } else {
+            (field_row_count,
+             method_def_row_count)
+        };
+        if first_field_index < last_field_index || (first_field_index == last_field_index && last_field_index == field_row_count){
+            for i in self.field_list[0].row_index()+1 .. last_field_index{
+                self.field_list.push(codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &i.to_le_bytes(), tables)?);
+            }
+        } else {
+            self.field_list.clear();
+        }
+        if first_method_index < last_method_index || (first_method_index == last_method_index && last_method_index == method_def_row_count){
+            for i in self.method_list[0].row_index()+1 .. last_method_index{
+                self.method_list.push(codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &i.to_le_bytes(), tables)?);
+            }
+        } else {
+            self.method_list.clear();
+        }
         Ok(())
     }
 }
@@ -587,7 +674,7 @@ pub struct MethodDef {
     pub rva: u32,
     pub impl_flags: Vec<enums::ClrMethodImpl>,
     pub flags: Vec<enums::ClrMethodAttr>,
-    name: String,
+    pub name: String,
     signature: Vec<u8>,
     param_list: Vec<Param>,
 }
@@ -3224,7 +3311,21 @@ impl crate::DnPe {
                 guids_heap,
             )?;
         }
-        Ok(ttable)
+        let mut tttable = ttable.clone();
+        for i in 0..tttable.row_count() {
+            let mut next_row = None;
+            if i + 1 < ttable.row_count() {
+                next_row = Some(ttable.get_row(i + 1)?);
+            }
+            tttable.get_mut_row(i)?.parse2(
+                ttables,
+                next_row,
+                strings_heap,
+                blobs_heap,
+                guids_heap,
+            )?;
+        }
+        Ok(tttable)
     }
 }
 

@@ -64,6 +64,10 @@ pub enum Error {
     MethodBodyFormatError(String),
     #[error("operand not have value")]
     OperandHasNoValue,
+    #[error("incorrect cast to {0} in file {1} at line {2}")]
+    IncorrectCastTo(&'static str, &'static str, u32),
+    #[error("incorrect table requested {0} in file {1} at line {2}")]
+    IncorrectTableRequested(&'static str, &'static str, u32),
     #[error("not implemented")]
     NotImplementedError,
 }
