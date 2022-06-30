@@ -9,10 +9,7 @@ pub struct BlobHeap {
 impl BlobHeap {
     pub fn get(&self, index: usize) -> Result<Vec<u8>> {
         if index >= self.data.len() {
-            return Err(Error::BlobHeapReadOutOfBound(
-                index,
-                self.data.len(),
-            ));
+            return Err(Error::BlobHeapReadOutOfBound(index, self.data.len()));
         }
         let (data_length, length_size) =
             crate::utils::read_compressed_usize(&self.data[index..index + 4])?;

@@ -1,3 +1,4 @@
+#![allow(clippy::too_many_arguments)]
 use crate::{error::Error, Result};
 use serde::ser::{Serialize, SerializeSeq};
 
@@ -20,10 +21,10 @@ impl Serialize for dyn MDTableTrait {
         S: serde::ser::Serializer,
     {
         let table_serializer = serializer.serialize_seq(Some(self.row_count()))?;
-        for _i in 0..self.row_count() {
-            //            let s = self.get_row(i).unwrap().get_row();
-            //            table_serializer.serialize_element(s)?;
-        }
+        // for _i in 0..self.row_count() {
+        //            let s = self.get_row(i).unwrap().get_row();
+        //            table_serializer.serialize_element(s)?;
+        // }
         table_serializer.end()
     }
 }
@@ -95,10 +96,7 @@ where
         let row_size = self.row_size();
         for r in &mut self.table {
             if data.len() - curr_offset < row_size {
-                return Err(Error::NotEnoughData(
-                    row_size,
-                    data.len() - curr_offset,
-                ));
+                return Err(Error::NotEnoughData(row_size, data.len() - curr_offset));
             }
             r.set_data(&data[curr_offset..curr_offset + row_size].to_vec())?;
             curr_offset += row_size;
@@ -287,7 +285,7 @@ where
         str_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> MDTableRow<T> {
         MDTableRow {
             str_offset_size,
@@ -1862,7 +1860,8 @@ impl MDTableRowTrait for ImplMap {
         self.mapping_flags = enums::ClrPinvokeMap::new(crate::utils::read_usize(&data[0..s1])?);
         self.member_forwarded.set(&data[s1..s2], tables)?;
         self.import_name = strings_heap.get_string(&data[s2..s3])?;
-        self.import_scope = codedindex::SimpleCodedIndex::new(vec!["ModuleRef"], 0, &data[s3..s4], tables)?;
+        self.import_scope =
+            codedindex::SimpleCodedIndex::new(vec!["ModuleRef"], 0, &data[s3..s4], tables)?;
         Ok(())
     }
 }
@@ -2827,7 +2826,8 @@ impl MetaDataTable {
         T: MDTableRowTrait + 'static,
     {
         let r = self.get_row(i)?;
-        let res = r.get_row()
+        let res = r
+            .get_row()
             .as_any()
             .downcast_ref::<T>()
             .ok_or_else(|| Error::RowIndexOutOfBound(i, self.row_count()))?;

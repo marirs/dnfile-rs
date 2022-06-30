@@ -3,7 +3,7 @@ use crate::{error::Error, Result};
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,
     table_names: &Vec<&'static str>,
-    tables_row_counts: &Vec<usize>,
+    tables_row_counts: &[usize],
 ) -> usize {
     let mut max_index = 0;
     for name in table_names {
@@ -44,13 +44,11 @@ pub trait CodedIndex {
             self.set_table(table_name);
             return Ok(());
         }
-        Err(Error::CodedIndexWithUndefinedTable(
-            table_name.to_string(),
-        ))
+        Err(Error::CodedIndexWithUndefinedTable(table_name.to_string()))
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SimpleCodedIndex {
     pub tag_bits: usize,
     pub table_names: Vec<&'static str>,
@@ -94,17 +92,6 @@ impl CodedIndex for SimpleCodedIndex {
     }
     fn get_tag_bits(&self) -> usize {
         self.tag_bits
-    }
-}
-
-impl Default for SimpleCodedIndex {
-    fn default() -> Self {
-        Self {
-            tag_bits: 0,
-            table_names: vec![],
-            row_index: 0,
-            table: "",
-        }
     }
 }
 

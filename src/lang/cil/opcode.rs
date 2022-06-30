@@ -47,6 +47,12 @@ pub struct OpCodes {
     pub two_byte_op_codes: Vec<OpCode>,
 }
 
+impl Default for OpCodes {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl OpCodes {
     pub fn new() -> Self {
         let mut res = Self {

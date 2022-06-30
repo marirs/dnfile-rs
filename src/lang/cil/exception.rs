@@ -11,7 +11,7 @@ pub struct ExceptionHandler {
     pub filter_start: i64,
     pub handler_start: i64,
     pub handler_end: i64,
-    pub catch_type: Option<super::super::clr::token::Token>
+    pub catch_type: Option<super::super::clr::token::Token>,
 }
 
 impl ExceptionHandler {

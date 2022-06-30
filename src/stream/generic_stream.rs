@@ -3,7 +3,7 @@ use crate::Result;
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct GenericStream {
     //#[serde(skip_serializing)]
-//data: Vec<u8>
+    //data: Vec<u8>
 }
 
 impl crate::DnPe {
