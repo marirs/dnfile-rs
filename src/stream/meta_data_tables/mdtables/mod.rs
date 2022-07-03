@@ -64,7 +64,7 @@ where
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<MDTable<T>> {
         Ok(MDTable::<T> {
             name: name.to_string(),
@@ -2882,7 +2882,7 @@ impl crate::DnPe {
     pub fn create_md_table(
         &self,
         i: &usize,
-        table_rowcounts: &Vec<usize>,
+        table_rowcounts: &[usize],
         is_sorted: bool,
         strings_offset_size: usize,
         guids_offset_size: usize,
@@ -2915,7 +2915,7 @@ impl crate::DnPe {
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<MDTable<T>>
     where
         T: std::fmt::Debug + Default + Clone + MDTableRowTrait,
@@ -2937,7 +2937,7 @@ impl crate::DnPe {
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<Box<dyn MDTableTrait>> {
         match i {
             0 => Ok(Box::new(self.new_table::<Module>(
