@@ -143,7 +143,7 @@ pub trait MDTableRowTrait {
         str_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize;
     fn parse(
         &mut self,
@@ -322,7 +322,7 @@ impl MDTableRowTrait for Module {
         str_offset_size: usize,
         guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + 3 * guids_offset_size
     }
@@ -381,7 +381,7 @@ impl MDTableRowTrait for TypeRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.resolution_scope.tag_bits,
@@ -442,7 +442,7 @@ impl MDTableRowTrait for TypeDef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 2 * str_offset_size
             + codedindex::clr_coded_index_struct_size(
@@ -592,7 +592,7 @@ impl MDTableRowTrait for FieldPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
@@ -633,7 +633,7 @@ impl MDTableRowTrait for Field {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + blobs_offset_size
     }
@@ -686,7 +686,7 @@ impl MDTableRowTrait for MethodPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
     }
@@ -730,7 +730,7 @@ impl MDTableRowTrait for MethodDef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 2
             + 2
@@ -794,7 +794,7 @@ impl MDTableRowTrait for ParamPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts)
     }
@@ -835,7 +835,7 @@ impl MDTableRowTrait for Param {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + 2 + str_offset_size
     }
@@ -884,7 +884,7 @@ impl MDTableRowTrait for InterfaceImpl {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -937,7 +937,7 @@ impl MDTableRowTrait for MemberRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.class.tag_bits,
@@ -1002,7 +1002,7 @@ impl MDTableRowTrait for Constant {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         1 + 1
             + codedindex::clr_coded_index_struct_size(
@@ -1065,7 +1065,7 @@ impl MDTableRowTrait for CustomAttribute {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1130,7 +1130,7 @@ impl MDTableRowTrait for FieldMarshal {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1186,7 +1186,7 @@ impl MDTableRowTrait for DeclSecurity {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1245,7 +1245,7 @@ impl MDTableRowTrait for ClassLayout {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + 4 + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
     }
@@ -1290,7 +1290,7 @@ impl MDTableRowTrait for FieldLayout {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
@@ -1331,7 +1331,7 @@ impl MDTableRowTrait for StandAloneSig {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         blobs_offset_size
     }
@@ -1376,7 +1376,7 @@ impl MDTableRowTrait for EventMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Event"], tables_row_counts)
@@ -1417,7 +1417,7 @@ impl MDTableRowTrait for EventPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
@@ -1456,7 +1456,7 @@ impl MDTableRowTrait for Event {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size
             + codedindex::clr_coded_index_struct_size(
@@ -1515,7 +1515,7 @@ impl MDTableRowTrait for PropertyMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Property"], tables_row_counts)
@@ -1556,7 +1556,7 @@ impl MDTableRowTrait for PropertyPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
@@ -1595,7 +1595,7 @@ impl MDTableRowTrait for Property {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + blobs_offset_size
     }
@@ -1650,7 +1650,7 @@ impl MDTableRowTrait for MethodSemantics {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -1708,7 +1708,7 @@ impl MDTableRowTrait for MethodImpl {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -1771,7 +1771,7 @@ impl MDTableRowTrait for ModuleRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         str_offset_size
     }
@@ -1815,7 +1815,7 @@ impl MDTableRowTrait for TypeSpec {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         blobs_offset_size
     }
@@ -1862,7 +1862,7 @@ impl MDTableRowTrait for ImplMap {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(
             self.member_forwarded.tag_bits,
@@ -1925,7 +1925,7 @@ impl MDTableRowTrait for FieldRva {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
@@ -1967,7 +1967,7 @@ impl MDTableRowTrait for EncLog {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
     }
@@ -2007,7 +2007,7 @@ impl MDTableRowTrait for EncMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4
     }
@@ -2054,7 +2054,7 @@ impl MDTableRowTrait for Assembly {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 2 + 2 + 2 + 2 + 4 + blobs_offset_size + str_offset_size + str_offset_size
     }
@@ -2120,7 +2120,7 @@ impl MDTableRowTrait for AssemblyProcessor {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4
     }
@@ -2160,7 +2160,7 @@ impl MDTableRowTrait for AssemblyOS {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 4 + 4
     }
@@ -2211,7 +2211,7 @@ impl MDTableRowTrait for AssemblyRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + 2
             + 2
@@ -2284,7 +2284,7 @@ impl MDTableRowTrait for AssemblyRefProcessor {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["AssemblyRef"], tables_row_counts)
     }
@@ -2330,7 +2330,7 @@ impl MDTableRowTrait for AssemblyRefOS {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + 4
@@ -2381,7 +2381,7 @@ impl MDTableRowTrait for File {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + str_offset_size + blobs_offset_size
     }
@@ -2438,7 +2438,7 @@ impl MDTableRowTrait for ExportedType {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + str_offset_size
@@ -2505,7 +2505,7 @@ impl MDTableRowTrait for ManifestResource {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + str_offset_size
@@ -2567,7 +2567,7 @@ impl MDTableRowTrait for NestedClass {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
@@ -2615,7 +2615,7 @@ impl MDTableRowTrait for GenericParam {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + 2
             + codedindex::clr_coded_index_struct_size(
@@ -2677,7 +2677,7 @@ impl MDTableRowTrait for GenericMethod {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.unknown1.tag_bits,
@@ -2732,7 +2732,7 @@ impl MDTableRowTrait for GenericParamConstraint {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["GenericParam"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -2783,7 +2783,7 @@ impl MDTableRowTrait for Unused {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
@@ -2818,7 +2818,7 @@ impl MDTableRowTrait for MaxTable {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
