@@ -147,7 +147,7 @@ pub trait MDTableRowTrait {
     ) -> usize;
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -329,7 +329,7 @@ impl MDTableRowTrait for Module {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -392,7 +392,7 @@ impl MDTableRowTrait for TypeRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -456,7 +456,7 @@ impl MDTableRowTrait for TypeDef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -599,7 +599,7 @@ impl MDTableRowTrait for FieldPtr {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -640,7 +640,7 @@ impl MDTableRowTrait for Field {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -693,7 +693,7 @@ impl MDTableRowTrait for MethodPtr {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -741,7 +741,7 @@ impl MDTableRowTrait for MethodDef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -801,7 +801,7 @@ impl MDTableRowTrait for ParamPtr {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -842,7 +842,7 @@ impl MDTableRowTrait for Param {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -896,7 +896,7 @@ impl MDTableRowTrait for InterfaceImpl {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -949,7 +949,7 @@ impl MDTableRowTrait for MemberRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1015,7 +1015,7 @@ impl MDTableRowTrait for Constant {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1080,7 +1080,7 @@ impl MDTableRowTrait for CustomAttribute {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1141,7 +1141,7 @@ impl MDTableRowTrait for FieldMarshal {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1197,7 +1197,7 @@ impl MDTableRowTrait for DeclSecurity {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1252,7 +1252,7 @@ impl MDTableRowTrait for ClassLayout {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1297,7 +1297,7 @@ impl MDTableRowTrait for FieldLayout {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1338,7 +1338,7 @@ impl MDTableRowTrait for StandAloneSig {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1384,7 +1384,7 @@ impl MDTableRowTrait for EventMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1424,7 +1424,7 @@ impl MDTableRowTrait for EventPtr {
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1468,7 +1468,7 @@ impl MDTableRowTrait for Event {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1523,7 +1523,7 @@ impl MDTableRowTrait for PropertyMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1563,7 +1563,7 @@ impl MDTableRowTrait for PropertyPtr {
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1602,7 +1602,7 @@ impl MDTableRowTrait for Property {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1662,7 +1662,7 @@ impl MDTableRowTrait for MethodSemantics {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1725,7 +1725,7 @@ impl MDTableRowTrait for MethodImpl {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1778,7 +1778,7 @@ impl MDTableRowTrait for ModuleRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1822,7 +1822,7 @@ impl MDTableRowTrait for TypeSpec {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -1874,7 +1874,7 @@ impl MDTableRowTrait for ImplMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1932,7 +1932,7 @@ impl MDTableRowTrait for FieldRva {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -1974,7 +1974,7 @@ impl MDTableRowTrait for EncLog {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2014,7 +2014,7 @@ impl MDTableRowTrait for EncMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2061,7 +2061,7 @@ impl MDTableRowTrait for Assembly {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -2127,7 +2127,7 @@ impl MDTableRowTrait for AssemblyProcessor {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2167,7 +2167,7 @@ impl MDTableRowTrait for AssemblyOS {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2225,7 +2225,7 @@ impl MDTableRowTrait for AssemblyRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -2291,7 +2291,7 @@ impl MDTableRowTrait for AssemblyRefProcessor {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2339,7 +2339,7 @@ impl MDTableRowTrait for AssemblyRefOS {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2388,7 +2388,7 @@ impl MDTableRowTrait for File {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -2452,7 +2452,7 @@ impl MDTableRowTrait for ExportedType {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2518,7 +2518,7 @@ impl MDTableRowTrait for ManifestResource {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2575,7 +2575,7 @@ impl MDTableRowTrait for NestedClass {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2628,7 +2628,7 @@ impl MDTableRowTrait for GenericParam {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2688,7 +2688,7 @@ impl MDTableRowTrait for GenericMethod {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
@@ -2744,7 +2744,7 @@ impl MDTableRowTrait for GenericParamConstraint {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2790,7 +2790,7 @@ impl MDTableRowTrait for Unused {
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -2825,7 +2825,7 @@ impl MDTableRowTrait for MaxTable {
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
