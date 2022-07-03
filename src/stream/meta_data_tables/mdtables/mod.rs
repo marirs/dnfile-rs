@@ -160,7 +160,7 @@ pub trait MDTableRowTrait {
     ) -> Result<()>;
     fn parse2(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
@@ -505,7 +505,7 @@ impl MDTableRowTrait for TypeDef {
 
     fn parse2(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
