@@ -170,7 +170,7 @@ pub trait MDTableRowTrait {
         strings_heap: &Option<&crate::stream::ClrStream>,
         blobss_heap: &Option<&crate::stream::ClrStream>,
         guids_heap: &Option<&crate::stream::ClrStream>,
-    ) -> Result<()>{
+    ) -> Result<()> {
         Ok(())
     }
     fn as_any(&self) -> &dyn std::any::Any;
@@ -470,29 +470,41 @@ impl MDTableRowTrait for TypeDef {
         let s1 = 4;
         let s2 = s1 + str_offset_size;
         let s3 = s2 + str_offset_size;
-        let s4 = s3 + codedindex::clr_coded_index_struct_size(
-            self.extends.tag_bits,
-            &self.extends.table_names,
-            tables_row_counts,
-        );
+        let s4 = s3
+            + codedindex::clr_coded_index_struct_size(
+                self.extends.tag_bits,
+                &self.extends.table_names,
+                tables_row_counts,
+            );
         let s5 = s4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
-        let s6 = s5 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
+        let s6 =
+            s5 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
             return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags.set(&data[0..s1])?;
-        self.type_name = strings_heap.get_string(&data[s1 .. s2])?;
+        self.type_name = strings_heap.get_string(&data[s1..s2])?;
         self.type_namespace = strings_heap.get_string(&data[s2..s3])?;
-        self.extends
-            .set(&data[s3..s4], tables)?;
-        self.field_list = vec![codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[s4..s5], tables)?];
-        self.method_list = vec![codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &data[s5..s6], tables)?];
+        self.extends.set(&data[s3..s4], tables)?;
+        self.field_list = vec![codedindex::SimpleCodedIndex::new(
+            vec!["Field"],
+            0,
+            &data[s4..s5],
+            tables,
+        )?];
+        self.method_list = vec![codedindex::SimpleCodedIndex::new(
+            vec!["MethodDef"],
+            0,
+            &data[s5..s6],
+            tables,
+        )?];
         Ok(())
     }
 
-    fn parse2(&mut self,
+    fn parse2(
+        &mut self,
         _data: &Vec<u8>,
         _str_offset_size: usize,
         _guids_offset_size: usize,
@@ -503,29 +515,60 @@ impl MDTableRowTrait for TypeDef {
         _strings_heap: &Option<&crate::stream::ClrStream>,
         _blobs_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
-    ) -> Result<()>{
-        let field_row_count = tables.get(&table_name_2_index("Field")?).ok_or_else(|| Error::IncorrectTableRequested("Field", file!(), line!()))?.row_count();
-        let method_def_row_count = tables.get(&table_name_2_index("MethodDef")?).ok_or_else(|| Error::IncorrectTableRequested("MethodDef", file!(), line!()))?.row_count();
-        let (first_field_index, first_method_index) = (self.field_list[0].row_index(), self.method_list[0].row_index());
-        let (last_field_index, last_method_index) = if let Some(nr) = next_row{
-            let nnr = nr.as_any()
+    ) -> Result<()> {
+        let field_row_count = tables
+            .get(&table_name_2_index("Field")?)
+            .ok_or(Error::IncorrectTableRequested("Field", file!(), line!()))?
+            .row_count();
+        let method_def_row_count = tables
+            .get(&table_name_2_index("MethodDef")?)
+            .ok_or(Error::IncorrectTableRequested(
+                "MethodDef",
+                file!(),
+                line!(),
+            ))?
+            .row_count();
+        let (first_field_index, first_method_index) = (
+            self.field_list[0].row_index(),
+            self.method_list[0].row_index(),
+        );
+        let (last_field_index, last_method_index) = if let Some(nr) = next_row {
+            let nnr = nr
+                .as_any()
                 .downcast_ref::<TypeDef>()
-                .ok_or_else(|| Error::IncorrectCastTo("TypeDef", file!(), line!()))?;
-            (std::cmp::min(field_row_count, nnr.field_list[0].row_index()), std::cmp::min(method_def_row_count, nnr.method_list[0].row_index()))
+                .ok_or(Error::IncorrectCastTo("TypeDef", file!(), line!()))?;
+            (
+                std::cmp::min(field_row_count, nnr.field_list[0].row_index()),
+                std::cmp::min(method_def_row_count, nnr.method_list[0].row_index()),
+            )
         } else {
-            (field_row_count,
-             method_def_row_count)
+            (field_row_count, method_def_row_count)
         };
-        if first_field_index < last_field_index || (first_field_index == last_field_index && last_field_index == field_row_count){
-            for i in self.field_list[0].row_index()+1 .. last_field_index{
-                self.field_list.push(codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &i.to_le_bytes(), tables)?);
+        if first_field_index < last_field_index
+            || (first_field_index == last_field_index && last_field_index == field_row_count)
+        {
+            for i in self.field_list[0].row_index() + 1..last_field_index {
+                self.field_list.push(codedindex::SimpleCodedIndex::new(
+                    vec!["Field"],
+                    0,
+                    &i.to_le_bytes(),
+                    tables,
+                )?);
             }
         } else {
             self.field_list.clear();
         }
-        if first_method_index < last_method_index || (first_method_index == last_method_index && last_method_index == method_def_row_count){
-            for i in self.method_list[0].row_index()+1 .. last_method_index{
-                self.method_list.push(codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &i.to_le_bytes(), tables)?);
+        if first_method_index < last_method_index
+            || (first_method_index == last_method_index
+                && last_method_index == method_def_row_count)
+        {
+            for i in self.method_list[0].row_index() + 1..last_method_index {
+                self.method_list.push(codedindex::SimpleCodedIndex::new(
+                    vec!["MethodDef"],
+                    0,
+                    &i.to_le_bytes(),
+                    tables,
+                )?);
             }
         } else {
             self.method_list.clear();
