@@ -7,7 +7,7 @@ use codedindex::CodedIndex;
 pub mod enums;
 
 pub trait MDTableTrait: std::fmt::Debug + MDTableTraitClone {
-    fn set_data(&mut self, data: &Vec<u8>) -> Result<()>;
+    fn set_data(&mut self, data: &[u8]) -> Result<()>;
     fn row_size(&self) -> usize;
     fn get_row(&self, i: usize) -> Result<&dyn MDTableRowTraitT>;
     fn get_mut_row(&mut self, i: usize) -> Result<&mut dyn MDTableRowTraitT>;
@@ -85,7 +85,7 @@ impl<T> MDTableTrait for MDTable<T>
 where
     T: 'static + MDTableRowTrait + std::fmt::Debug + Default + Clone,
 {
-    fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
+    fn set_data(&mut self, data: &[u8]) -> Result<()> {
         if data.len() < self.table.len() * self.row_size() {
             return Err(Error::NotEnoughData(
                 data.len(),
@@ -2851,7 +2851,7 @@ pub struct MetaDataTable {
 }
 
 impl MetaDataTable {
-    pub fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
+    pub fn set_data(&mut self, data: &[u8]) -> Result<()> {
         self.table.set_data(data)
     }
     pub fn row_count(&self) -> usize {
@@ -3325,7 +3325,7 @@ impl crate::DnPe {
         &self,
         table: &MetaDataTable,
         _rva: &u32,
-        table_data: &Vec<u8>,
+        table_data: &[u8],
     ) -> Result<MetaDataTable> {
         let mut table = table.clone();
         table.set_data(table_data)?;
