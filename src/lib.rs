@@ -388,9 +388,7 @@ impl MetaData {
     ) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable> {
         for s in self.streams.values() {
             if let stream::Stream::MetaDataTables(mt) = &s.stream {
-                match mt
-                    .tables
-                    .get(index) {
+                match mt.tables.get(index) {
                     Some(s) => return Ok(s),
                     None => return Err(Error::UndefinedMetaDataTableIndex(*index as u32)),
                 }
