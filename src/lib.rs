@@ -314,6 +314,13 @@ impl ClrData {
         self.metadata.md_table(name)
     }
 
+    pub fn md_table_by_index(
+        &self,
+        index: &usize,
+    ) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable> {
+        self.metadata.md_table_by_index(index)
+    }
+
     pub fn resolve_coded_index<T>(
         &self,
         index: &dyn stream::meta_data_tables::mdtables::codedindex::CodedIndex,
@@ -373,6 +380,23 @@ impl MetaData {
             }
         }
         Err(Error::UndefinedMetaDataTableName(name))
+    }
+
+    pub fn md_table_by_index(
+        &self,
+        index: &usize,
+    ) -> Result<&stream::meta_data_tables::mdtables::MetaDataTable> {
+        for s in self.streams.values() {
+            if let stream::Stream::MetaDataTables(mt) = &s.stream {
+                match mt
+                    .tables
+                    .get(index) {
+                    Some(s) => return Ok(s),
+                    None => return Err(Error::UndefinedMetaDataTableIndex(*index as u32)),
+                }
+            }
+        }
+        Err(Error::UndefinedMetaDataTableIndex(*index as u32))
     }
 
     pub fn get_us(&self, rid: usize) -> Result<String> {

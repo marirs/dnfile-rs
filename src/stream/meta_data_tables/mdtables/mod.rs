@@ -160,16 +160,16 @@ pub trait MDTableRowTrait {
     ) -> Result<()>;
     fn parse2(
         &mut self,
-        data: &Vec<u8>,
-        str_offset_size: usize,
-        guids_offset_size: usize,
-        blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
-        tables: &std::collections::BTreeMap<usize, MetaDataTable>,
-        next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        _data: &Vec<u8>,
+        _str_offset_size: usize,
+        _guids_offset_size: usize,
+        _blobs_offset_size: usize,
+        _tables_row_counts: &Vec<usize>,
+        _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
+        _next_row: Option<&dyn MDTableRowTrait>,
+        _strings_heap: &Option<&crate::stream::ClrStream>,
+        _blobss_heap: &Option<&crate::stream::ClrStream>,
+        _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()>{
         Ok(())
     }

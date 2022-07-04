@@ -203,7 +203,7 @@ impl Reader {
             let op_value_second = self.read_u8()? as usize;
             Ok(self.cil_opcodes.two_byte_op_codes[op_value_second].clone())
         } else {
-            Ok(self.cil_opcodes.two_byte_op_codes[op_value_first].clone())
+            Ok(self.cil_opcodes.one_byte_op_codes[op_value_first].clone())
         }
     }
 
