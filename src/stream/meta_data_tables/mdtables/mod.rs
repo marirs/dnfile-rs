@@ -7,7 +7,7 @@ use codedindex::CodedIndex;
 pub mod enums;
 
 pub trait MDTableTrait: std::fmt::Debug + MDTableTraitClone {
-    fn set_data(&mut self, data: &Vec<u8>) -> Result<()>;
+    fn set_data(&mut self, data: &[u8]) -> Result<()>;
     fn row_size(&self) -> usize;
     fn get_row(&self, i: usize) -> Result<&dyn MDTableRowTraitT>;
     fn get_mut_row(&mut self, i: usize) -> Result<&mut dyn MDTableRowTraitT>;
@@ -64,7 +64,7 @@ where
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<MDTable<T>> {
         Ok(MDTable::<T> {
             name: name.to_string(),
@@ -85,7 +85,7 @@ impl<T> MDTableTrait for MDTable<T>
 where
     T: 'static + MDTableRowTrait + std::fmt::Debug + Default + Clone,
 {
-    fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
+    fn set_data(&mut self, data: &[u8]) -> Result<()> {
         if data.len() < self.table.len() * self.row_size() {
             return Err(Error::NotEnoughData(
                 data.len(),
@@ -143,15 +143,15 @@ pub trait MDTableRowTrait {
         str_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize;
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -160,17 +160,17 @@ pub trait MDTableRowTrait {
     ) -> Result<()>;
     fn parse2(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
         _blobss_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
-    ) -> Result<()>{
+    ) -> Result<()> {
         Ok(())
     }
     fn as_any(&self) -> &dyn std::any::Any;
@@ -322,18 +322,18 @@ impl MDTableRowTrait for Module {
         str_offset_size: usize,
         guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + 3 * guids_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -381,7 +381,7 @@ impl MDTableRowTrait for TypeRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.resolution_scope.tag_bits,
@@ -392,11 +392,11 @@ impl MDTableRowTrait for TypeRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -442,7 +442,7 @@ impl MDTableRowTrait for TypeDef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 2 * str_offset_size
             + codedindex::clr_coded_index_struct_size(
@@ -456,11 +456,11 @@ impl MDTableRowTrait for TypeDef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -470,62 +470,105 @@ impl MDTableRowTrait for TypeDef {
         let s1 = 4;
         let s2 = s1 + str_offset_size;
         let s3 = s2 + str_offset_size;
-        let s4 = s3 + codedindex::clr_coded_index_struct_size(
-            self.extends.tag_bits,
-            &self.extends.table_names,
-            tables_row_counts,
-        );
+        let s4 = s3
+            + codedindex::clr_coded_index_struct_size(
+                self.extends.tag_bits,
+                &self.extends.table_names,
+                tables_row_counts,
+            );
         let s5 = s4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
-        let s6 = s5 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
+        let s6 =
+            s5 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
         let strings_heap = if let Some(s) = strings_heap {
             s
         } else {
             return Err(Error::RefToUndefinedHeap("string"));
         };
         self.flags.set(&data[0..s1])?;
-        self.type_name = strings_heap.get_string(&data[s1 .. s2])?;
+        self.type_name = strings_heap.get_string(&data[s1..s2])?;
         self.type_namespace = strings_heap.get_string(&data[s2..s3])?;
-        self.extends
-            .set(&data[s3..s4], tables)?;
-        self.field_list = vec![codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[s4..s5], tables)?];
-        self.method_list = vec![codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &data[s5..s6], tables)?];
+        self.extends.set(&data[s3..s4], tables)?;
+        self.field_list = vec![codedindex::SimpleCodedIndex::new(
+            vec!["Field"],
+            0,
+            &data[s4..s5],
+            tables,
+        )?];
+        self.method_list = vec![codedindex::SimpleCodedIndex::new(
+            vec!["MethodDef"],
+            0,
+            &data[s5..s6],
+            tables,
+        )?];
         Ok(())
     }
 
-    fn parse2(&mut self,
-        _data: &Vec<u8>,
+    fn parse2(
+        &mut self,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
         _blobs_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
-    ) -> Result<()>{
-        let field_row_count = tables.get(&table_name_2_index("Field")?).ok_or_else(|| Error::IncorrectTableRequested("Field", file!(), line!()))?.row_count();
-        let method_def_row_count = tables.get(&table_name_2_index("MethodDef")?).ok_or_else(|| Error::IncorrectTableRequested("MethodDef", file!(), line!()))?.row_count();
-        let (first_field_index, first_method_index) = (self.field_list[0].row_index(), self.method_list[0].row_index());
-        let (last_field_index, last_method_index) = if let Some(nr) = next_row{
-            let nnr = nr.as_any()
+    ) -> Result<()> {
+        let field_row_count = tables
+            .get(&table_name_2_index("Field")?)
+            .ok_or(Error::IncorrectTableRequested("Field", file!(), line!()))?
+            .row_count();
+        let method_def_row_count = tables
+            .get(&table_name_2_index("MethodDef")?)
+            .ok_or(Error::IncorrectTableRequested(
+                "MethodDef",
+                file!(),
+                line!(),
+            ))?
+            .row_count();
+        let (first_field_index, first_method_index) = (
+            self.field_list[0].row_index(),
+            self.method_list[0].row_index(),
+        );
+        let (last_field_index, last_method_index) = if let Some(nr) = next_row {
+            let nnr = nr
+                .as_any()
                 .downcast_ref::<TypeDef>()
-                .ok_or_else(|| Error::IncorrectCastTo("TypeDef", file!(), line!()))?;
-            (std::cmp::min(field_row_count, nnr.field_list[0].row_index()), std::cmp::min(method_def_row_count, nnr.method_list[0].row_index()))
+                .ok_or(Error::IncorrectCastTo("TypeDef", file!(), line!()))?;
+            (
+                std::cmp::min(field_row_count, nnr.field_list[0].row_index()),
+                std::cmp::min(method_def_row_count, nnr.method_list[0].row_index()),
+            )
         } else {
-            (field_row_count,
-             method_def_row_count)
+            (field_row_count, method_def_row_count)
         };
-        if first_field_index < last_field_index || (first_field_index == last_field_index && last_field_index == field_row_count){
-            for i in self.field_list[0].row_index()+1 .. last_field_index{
-                self.field_list.push(codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &i.to_le_bytes(), tables)?);
+        if first_field_index < last_field_index
+            || (first_field_index == last_field_index && last_field_index == field_row_count)
+        {
+            for i in self.field_list[0].row_index() + 1..last_field_index {
+                self.field_list.push(codedindex::SimpleCodedIndex::new(
+                    vec!["Field"],
+                    0,
+                    &i.to_le_bytes(),
+                    tables,
+                )?);
             }
         } else {
             self.field_list.clear();
         }
-        if first_method_index < last_method_index || (first_method_index == last_method_index && last_method_index == method_def_row_count){
-            for i in self.method_list[0].row_index()+1 .. last_method_index{
-                self.method_list.push(codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &i.to_le_bytes(), tables)?);
+        if first_method_index < last_method_index
+            || (first_method_index == last_method_index
+                && last_method_index == method_def_row_count)
+        {
+            for i in self.method_list[0].row_index() + 1..last_method_index {
+                self.method_list.push(codedindex::SimpleCodedIndex::new(
+                    vec!["MethodDef"],
+                    0,
+                    &i.to_le_bytes(),
+                    tables,
+                )?);
             }
         } else {
             self.method_list.clear();
@@ -549,18 +592,18 @@ impl MDTableRowTrait for FieldPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -590,18 +633,18 @@ impl MDTableRowTrait for Field {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + blobs_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -643,18 +686,18 @@ impl MDTableRowTrait for MethodPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -687,7 +730,7 @@ impl MDTableRowTrait for MethodDef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 2
             + 2
@@ -698,11 +741,11 @@ impl MDTableRowTrait for MethodDef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -751,18 +794,18 @@ impl MDTableRowTrait for ParamPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -792,18 +835,18 @@ impl MDTableRowTrait for Param {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + 2 + str_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -841,7 +884,7 @@ impl MDTableRowTrait for InterfaceImpl {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -853,11 +896,11 @@ impl MDTableRowTrait for InterfaceImpl {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -894,7 +937,7 @@ impl MDTableRowTrait for MemberRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.class.tag_bits,
@@ -906,11 +949,11 @@ impl MDTableRowTrait for MemberRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -959,7 +1002,7 @@ impl MDTableRowTrait for Constant {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         1 + 1
             + codedindex::clr_coded_index_struct_size(
@@ -972,11 +1015,11 @@ impl MDTableRowTrait for Constant {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1022,7 +1065,7 @@ impl MDTableRowTrait for CustomAttribute {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1037,11 +1080,11 @@ impl MDTableRowTrait for CustomAttribute {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1087,7 +1130,7 @@ impl MDTableRowTrait for FieldMarshal {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1098,11 +1141,11 @@ impl MDTableRowTrait for FieldMarshal {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1143,7 +1186,7 @@ impl MDTableRowTrait for DeclSecurity {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1154,11 +1197,11 @@ impl MDTableRowTrait for DeclSecurity {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1202,18 +1245,18 @@ impl MDTableRowTrait for ClassLayout {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + 4 + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1247,18 +1290,18 @@ impl MDTableRowTrait for FieldLayout {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1288,18 +1331,18 @@ impl MDTableRowTrait for StandAloneSig {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         blobs_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1333,7 +1376,7 @@ impl MDTableRowTrait for EventMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Event"], tables_row_counts)
@@ -1341,11 +1384,11 @@ impl MDTableRowTrait for EventMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1374,18 +1417,18 @@ impl MDTableRowTrait for EventPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1413,7 +1456,7 @@ impl MDTableRowTrait for Event {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size
             + codedindex::clr_coded_index_struct_size(
@@ -1425,11 +1468,11 @@ impl MDTableRowTrait for Event {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1472,7 +1515,7 @@ impl MDTableRowTrait for PropertyMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["Property"], tables_row_counts)
@@ -1480,11 +1523,11 @@ impl MDTableRowTrait for PropertyMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1513,18 +1556,18 @@ impl MDTableRowTrait for PropertyPtr {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1552,18 +1595,18 @@ impl MDTableRowTrait for Property {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + str_offset_size + blobs_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1607,7 +1650,7 @@ impl MDTableRowTrait for MethodSemantics {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -1619,11 +1662,11 @@ impl MDTableRowTrait for MethodSemantics {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1665,7 +1708,7 @@ impl MDTableRowTrait for MethodImpl {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -1682,11 +1725,11 @@ impl MDTableRowTrait for MethodImpl {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1728,18 +1771,18 @@ impl MDTableRowTrait for ModuleRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         str_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1772,18 +1815,18 @@ impl MDTableRowTrait for TypeSpec {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         blobs_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1819,7 +1862,7 @@ impl MDTableRowTrait for ImplMap {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + codedindex::clr_coded_index_struct_size(
             self.member_forwarded.tag_bits,
@@ -1831,11 +1874,11 @@ impl MDTableRowTrait for ImplMap {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1882,18 +1925,18 @@ impl MDTableRowTrait for FieldRva {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1924,18 +1967,18 @@ impl MDTableRowTrait for EncLog {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -1964,18 +2007,18 @@ impl MDTableRowTrait for EncMap {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2011,18 +2054,18 @@ impl MDTableRowTrait for Assembly {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 2 + 2 + 2 + 2 + 4 + blobs_offset_size + str_offset_size + str_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2077,18 +2120,18 @@ impl MDTableRowTrait for AssemblyProcessor {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2117,18 +2160,18 @@ impl MDTableRowTrait for AssemblyOS {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + 4 + 4
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2168,7 +2211,7 @@ impl MDTableRowTrait for AssemblyRef {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         2 + 2
             + 2
@@ -2182,11 +2225,11 @@ impl MDTableRowTrait for AssemblyRef {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2241,18 +2284,18 @@ impl MDTableRowTrait for AssemblyRefProcessor {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + codedindex::clr_coded_index_struct_size(0, &vec!["AssemblyRef"], tables_row_counts)
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2287,7 +2330,7 @@ impl MDTableRowTrait for AssemblyRefOS {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + 4
@@ -2296,11 +2339,11 @@ impl MDTableRowTrait for AssemblyRefOS {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2338,18 +2381,18 @@ impl MDTableRowTrait for File {
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         4 + str_offset_size + blobs_offset_size
     }
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2395,7 +2438,7 @@ impl MDTableRowTrait for ExportedType {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + str_offset_size
@@ -2409,11 +2452,11 @@ impl MDTableRowTrait for ExportedType {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2462,7 +2505,7 @@ impl MDTableRowTrait for ManifestResource {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         4 + 4
             + str_offset_size
@@ -2475,11 +2518,11 @@ impl MDTableRowTrait for ManifestResource {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2524,7 +2567,7 @@ impl MDTableRowTrait for NestedClass {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts)
@@ -2532,11 +2575,11 @@ impl MDTableRowTrait for NestedClass {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2572,7 +2615,7 @@ impl MDTableRowTrait for GenericParam {
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         2 + 2
             + codedindex::clr_coded_index_struct_size(
@@ -2585,11 +2628,11 @@ impl MDTableRowTrait for GenericParam {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2634,7 +2677,7 @@ impl MDTableRowTrait for GenericMethod {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(
             self.unknown1.tag_bits,
@@ -2645,11 +2688,11 @@ impl MDTableRowTrait for GenericMethod {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2689,7 +2732,7 @@ impl MDTableRowTrait for GenericParamConstraint {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> usize {
         codedindex::clr_coded_index_struct_size(0, &vec!["GenericParam"], tables_row_counts)
             + codedindex::clr_coded_index_struct_size(
@@ -2701,11 +2744,11 @@ impl MDTableRowTrait for GenericParamConstraint {
 
     fn parse(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2740,18 +2783,18 @@ impl MDTableRowTrait for Unused {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2775,18 +2818,18 @@ impl MDTableRowTrait for MaxTable {
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
     ) -> usize {
         0
     }
 
     fn parse(
         &mut self,
-        _data: &Vec<u8>,
+        _data: &[u8],
         _str_offset_size: usize,
         _guids_offset_size: usize,
         _blobs_offset_size: usize,
-        _tables_row_counts: &Vec<usize>,
+        _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
         _strings_heap: &Option<&crate::stream::ClrStream>,
@@ -2808,7 +2851,7 @@ pub struct MetaDataTable {
 }
 
 impl MetaDataTable {
-    pub fn set_data(&mut self, data: &Vec<u8>) -> Result<()> {
+    pub fn set_data(&mut self, data: &[u8]) -> Result<()> {
         self.table.set_data(data)
     }
     pub fn row_count(&self) -> usize {
@@ -2839,7 +2882,7 @@ impl crate::DnPe {
     pub fn create_md_table(
         &self,
         i: &usize,
-        table_rowcounts: &Vec<usize>,
+        table_rowcounts: &[usize],
         is_sorted: bool,
         strings_offset_size: usize,
         guids_offset_size: usize,
@@ -2872,7 +2915,7 @@ impl crate::DnPe {
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<MDTable<T>>
     where
         T: std::fmt::Debug + Default + Clone + MDTableRowTrait,
@@ -2894,7 +2937,7 @@ impl crate::DnPe {
         strings_offset_size: usize,
         guids_offset_size: usize,
         blobs_offset_size: usize,
-        tables_row_counts: &Vec<usize>,
+        tables_row_counts: &[usize],
     ) -> Result<Box<dyn MDTableTrait>> {
         match i {
             0 => Ok(Box::new(self.new_table::<Module>(
@@ -3282,7 +3325,7 @@ impl crate::DnPe {
         &self,
         table: &MetaDataTable,
         _rva: &u32,
-        table_data: &Vec<u8>,
+        table_data: &[u8],
     ) -> Result<MetaDataTable> {
         let mut table = table.clone();
         table.set_data(table_data)?;
