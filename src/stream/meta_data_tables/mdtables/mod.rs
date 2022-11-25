@@ -428,7 +428,7 @@ pub struct TypeDef {
     pub type_name: String,
     pub type_namespace: String,
     extends: codedindex::TypeDefOrRef,
-    field_list: Vec<codedindex::SimpleCodedIndex>, //Field
+    pub field_list: Vec<codedindex::SimpleCodedIndex>, //Field
     pub method_list: Vec<codedindex::SimpleCodedIndex>, //MethodDef
 }
 
@@ -619,7 +619,7 @@ impl MDTableRowTrait for FieldPtr {
 #[derive(Debug, Clone, Default)]
 pub struct Field {
     flags: Vec<enums::ClrFieldAttr>,
-    name: String,
+    pub name: String,
     signature: Vec<u8>,
 }
 
@@ -1309,7 +1309,7 @@ impl MDTableRowTrait for FieldLayout {
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
         let s1 = 4;
-        let s2 = codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
+        let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
         self.offset = crate::utils::read_usize(&data[0..s1])? as u32;
         self.field = codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[s1..s2], tables)?;
         Ok(())
@@ -1501,8 +1501,8 @@ impl MDTableRowTrait for Event {
 
 #[derive(Debug, Clone, Default)]
 pub struct PropertyMap {
-    parent: codedindex::SimpleCodedIndex, //typedef
-    property_list: Vec<Property>,
+    pub parent: codedindex::SimpleCodedIndex, //typedef
+    pub property_list: Vec<Property>,
 }
 
 impl MDTableRowTrait for PropertyMap {
@@ -1580,9 +1580,9 @@ impl MDTableRowTrait for PropertyPtr {
 
 #[derive(Debug, Clone, Default)]
 pub struct Property {
-    flags: Vec<enums::ClrPropertyAttr>,
-    name: String,
-    _type: Vec<u8>,
+    pub flags: Vec<enums::ClrPropertyAttr>,
+    pub name: String,
+    pub _type: Vec<u8>,
 }
 
 impl MDTableRowTrait for Property {
@@ -1635,9 +1635,9 @@ impl MDTableRowTrait for Property {
 
 #[derive(Debug, Clone, Default)]
 pub struct MethodSemantics {
-    semantics: Vec<enums::ClrMethodSemanticsAttr>,
-    method: codedindex::SimpleCodedIndex,
-    association: codedindex::HasSemantics,
+    pub semantics: Vec<enums::ClrMethodSemanticsAttr>,
+    pub method: codedindex::SimpleCodedIndex,
+    pub association: codedindex::HasSemantics,
 }
 
 impl MDTableRowTrait for MethodSemantics {
