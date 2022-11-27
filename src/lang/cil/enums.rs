@@ -294,7 +294,7 @@ pub enum StackBehaviour {
     PopAll = 0xFF,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq,Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum OperandType {
     InlineBrTarget = 0,
     InlineField = 1,
