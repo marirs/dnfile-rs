@@ -1,6 +1,7 @@
 use super::super::cil::enums::*;
+use serde::Serialize;
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct OpCode {
     pub name: &'static str,
     pub value: OpCodeValue,

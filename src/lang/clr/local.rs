@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, serde::Serialize)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Local {
     index: usize,
 }

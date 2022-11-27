@@ -1,9 +1,10 @@
 use super::enums::ExceptionHandlerType;
+use serde::Serialize;
 
 pub const TINY_SIZE: usize = 12;
 pub const FAT_SIZE: usize = 24;
 
-#[derive(Debug, Default, Clone, serde::Serialize)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct ExceptionHandler {
     pub exception_type: usize,
     pub try_start: i64,

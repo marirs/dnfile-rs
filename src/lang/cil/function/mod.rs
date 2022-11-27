@@ -6,7 +6,9 @@ pub mod reader;
 use super::super::clr::token::Token;
 use super::enums::*;
 
-#[derive(Debug, Clone, serde::Serialize)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Function {
     pub offset: usize,
     header_size: usize,

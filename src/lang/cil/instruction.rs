@@ -1,8 +1,9 @@
 use super::super::clr::{argument::Argument, local::Local, token::Token};
 use super::enums::*;
 use crate::{error::Error, Result};
+use serde::Serialize;
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Operand {
     Token(Token),
     StringToken(Token),
@@ -77,7 +78,7 @@ impl TryInto<Local> for Operand {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Instruction {
     pub offset: usize,
     pub opcode: super::opcode::OpCode,
