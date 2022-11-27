@@ -1,5 +1,5 @@
 #![allow(non_camel_case_types)]
-#[derive(Debug, Clone, PartialEq, Copy, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Copy, serde::Serialize)]
 pub enum OpCodeValue {
     UNKNOWN1 = 0x0100,
     UNKNOWN2 = 0x0101,
@@ -291,7 +291,7 @@ pub enum StackBehaviour {
     PopAll = 0xFF,
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq,serde::Serialize)]
 pub enum OperandType {
     InlineBrTarget = 0,
     InlineField = 1,

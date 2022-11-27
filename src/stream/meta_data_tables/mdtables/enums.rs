@@ -153,7 +153,7 @@ impl Default for CorTypeStringFormat {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CorMethodCodeType {
     IL,
     Native,
@@ -172,7 +172,7 @@ impl CorMethodCodeType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CorMethodManaged {
     Unmanaged,
     Managed,
@@ -187,7 +187,7 @@ impl CorMethodManaged {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ClrMethodImpl {
     MethodCodeType(CorMethodCodeType),
     MethodManaged(CorMethodManaged),
@@ -330,7 +330,7 @@ impl ClrFieldAttr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CorMethodMemberAccess {
     PrivateScope,
     Private,
@@ -357,7 +357,7 @@ impl CorMethodMemberAccess {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CorMethodAttrFlag {
     Static,
     Final,
@@ -416,7 +416,7 @@ impl CorMethodAttrFlag {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CorMethodVtableLayout {
     ReuseSlot,
     NewSlot,
@@ -431,7 +431,7 @@ impl CorMethodVtableLayout {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ClrMethodAttr {
     MemberAccess(CorMethodMemberAccess),
     AttrFlag(CorMethodAttrFlag),
@@ -523,7 +523,7 @@ impl ClrPropertyAttr {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ClrMethodSemanticsAttr {
     Setter,
     Getter,

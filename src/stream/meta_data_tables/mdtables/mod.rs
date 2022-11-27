@@ -98,7 +98,7 @@ where
             if data.len() - curr_offset < row_size {
                 return Err(Error::NotEnoughData(row_size, data.len() - curr_offset));
             }
-            r.set_data(&data[curr_offset..curr_offset + row_size].to_vec())?;
+            r.set_data(&data[curr_offset..curr_offset + row_size])?;
             curr_offset += row_size;
         }
         Ok(())
