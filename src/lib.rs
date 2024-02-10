@@ -67,7 +67,7 @@ impl DnPe {
                 .unwrap()
                 .windows_fields
                 .file_alignment,
-            &goblin::pe::options::ParseOptions { resolve_rva: true },
+                &goblin::pe::options::ParseOptions::default(),
         ) {
             Some(s) => Ok(s),
             None => Err(Error::UnresolvedRvaError(rva)),
