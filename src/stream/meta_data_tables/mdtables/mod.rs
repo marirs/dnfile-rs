@@ -2888,7 +2888,7 @@ impl crate::DnPe {
         guids_offset_size: usize,
         blobs_offset_size: usize,
     ) -> Result<MetaDataTable> {
-        let num_rows = table_rowcounts[*i as usize];
+        let num_rows = table_rowcounts[*i];
         let table = self.new_mdtable(
             *i,
             &num_rows,

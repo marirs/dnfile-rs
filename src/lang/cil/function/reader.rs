@@ -28,7 +28,7 @@ impl Reader {
     }
 
     pub fn is_arg_operand_instruction(&mut self, insn: &Instruction) -> bool {
-        vec![
+        [
             OpCodeValue::Ldarg,
             OpCodeValue::Ldarg_S,
             OpCodeValue::Ldarga,

@@ -46,25 +46,23 @@ impl Function {
 
     pub fn parse_header(&mut self, reader: &mut reader::Reader) -> Result<()> {
         let header_byte = reader.read_u8()? as usize;
-        if vec![
+        if [
             CorILMethod::TinyFormat as usize,
             CorILMethod::TinyFormat1 as usize,
         ]
         .contains(&(header_byte & CorILMethod::FormatMask as usize))
         {
-            self.flags = flags::CilMethodBodyFlags::new(
-                header_byte as usize & CorILMethod::FormatMask as usize,
-            );
+            self.flags =
+                flags::CilMethodBodyFlags::new(header_byte & CorILMethod::FormatMask as usize);
             self.header_size = 1;
             self.max_stack = 8;
-            self.code_size = header_byte as usize >> 2;
+            self.code_size = header_byte >> 2;
             self.local_var_sig_tok = None;
-        } else if vec![CorILMethod::FatFormat as usize]
-            .contains(&(header_byte as usize & CorILMethod::FormatMask as usize))
+        } else if [CorILMethod::FatFormat as usize]
+            .contains(&(header_byte & CorILMethod::FormatMask as usize))
         {
-            self.flags = flags::CilMethodBodyFlags::new(
-                ((reader.read_u8()? as usize) << 8) | header_byte as usize,
-            );
+            self.flags =
+                flags::CilMethodBodyFlags::new(((reader.read_u8()? as usize) << 8) | header_byte);
             self.header_size = self.flags.flags >> 12;
             self.max_stack = reader.read_u16()? as usize;
             self.code_size = reader.read_u32()? as usize;
@@ -83,7 +81,7 @@ impl Function {
         } else {
             return Err(Error::MethodBodyFormatError(format!(
                 "bad header format {:02x}",
-                header_byte as usize & CorILMethod::FormatMask as usize
+                header_byte & CorILMethod::FormatMask as usize
             )));
         }
         Ok(())

@@ -10,7 +10,7 @@ use crate::{
     stream::meta_data_tables::mdtables::{enums::*, *},
 };
 
-pub type Result<T> = std::result::Result<T, error::Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Serialize)]
 pub struct DnPe {
@@ -67,7 +67,7 @@ impl DnPe {
                 .unwrap()
                 .windows_fields
                 .file_alignment,
-                &goblin::pe::options::ParseOptions::default(),
+            &goblin::pe::options::ParseOptions::default(),
         ) {
             Some(s) => Ok(s),
             None => Err(Error::UnresolvedRvaError(rva)),

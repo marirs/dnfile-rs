@@ -13,10 +13,14 @@ impl UserStringHeap {
         }
 
         let (data_length, length_size) = crate::utils::read_compressed_usize(
-            self.data.get(index..).ok_or_else(|| Error::UserStringHeapReadOutOfBound(index, self.data.len()))?
+            self.data
+                .get(index..)
+                .ok_or_else(|| Error::UserStringHeapReadOutOfBound(index, self.data.len()))?,
         )?;
 
-        let end_index = index.checked_add(length_size).and_then(|i| i.checked_add(data_length));
+        let end_index = index
+            .checked_add(length_size)
+            .and_then(|i| i.checked_add(data_length));
         match end_index {
             Some(end) if end <= self.data.len() => Ok(self.data[index + length_size..end].to_vec()),
             _ => Err(Error::UserStringHeapReadOutOfBound(index, self.data.len())),
@@ -25,7 +29,8 @@ impl UserStringHeap {
 
     pub fn get_us(&self, index: usize) -> Result<String> {
         let data = self.get(index)?;
-        let utf16: Vec<u16> = data.chunks_exact(2)
+        let utf16: Vec<u16> = data
+            .chunks_exact(2)
             .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
             .collect();
         Ok(String::from_utf16(&utf16)?)

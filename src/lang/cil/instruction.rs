@@ -114,7 +114,7 @@ impl Instruction {
 
     pub fn size(&self) -> usize {
         let opcode = &self.opcode;
-        if vec![
+        if [
             OperandType::InlineBrTarget,
             OperandType::InlineField,
             OperandType::InlineI,
@@ -128,17 +128,17 @@ impl Instruction {
         .contains(&opcode.operand_type)
         {
             opcode.size() + 4
-        } else if vec![OperandType::InlineI8, OperandType::InlineR].contains(&opcode.operand_type) {
+        } else if [OperandType::InlineI8, OperandType::InlineR].contains(&opcode.operand_type) {
             opcode.size() + 8
-        } else if vec![OperandType::InlineSwitch].contains(&opcode.operand_type) {
+        } else if [OperandType::InlineSwitch].contains(&opcode.operand_type) {
             if let Operand::Arguments(v) = &self.operand {
                 opcode.size() + 4 + v.len() * 4
             } else {
                 opcode.size() + 4
             }
-        } else if vec![OperandType::InlineVar].contains(&opcode.operand_type) {
+        } else if [OperandType::InlineVar].contains(&opcode.operand_type) {
             opcode.size() + 2
-        } else if vec![
+        } else if [
             OperandType::ShortInlineBrTarget,
             OperandType::ShortInlineI,
             OperandType::ShortInlineVar,
@@ -156,23 +156,23 @@ impl Instruction {
     }
 
     pub fn is_leave(&self) -> bool {
-        vec![OpCodeValue::Leave, OpCodeValue::Leave_S].contains(&self.opcode.value)
+        [OpCodeValue::Leave, OpCodeValue::Leave_S].contains(&self.opcode.value)
     }
 
     pub fn is_br(&self) -> bool {
-        vec![OpCodeValue::Br, OpCodeValue::Br_S].contains(&self.opcode.value)
+        [OpCodeValue::Br, OpCodeValue::Br_S].contains(&self.opcode.value)
     }
 
     pub fn is_br_false(&self) -> bool {
-        vec![OpCodeValue::Brfalse, OpCodeValue::Brfalse_S].contains(&self.opcode.value)
+        [OpCodeValue::Brfalse, OpCodeValue::Brfalse_S].contains(&self.opcode.value)
     }
 
     pub fn is_br_true(&self) -> bool {
-        vec![OpCodeValue::Brtrue, OpCodeValue::Brtrue_S].contains(&self.opcode.value)
+        [OpCodeValue::Brtrue, OpCodeValue::Brtrue_S].contains(&self.opcode.value)
     }
 
     pub fn is_cond_br(&self) -> bool {
-        vec![
+        [
             OpCodeValue::Bge,
             OpCodeValue::Bge_S,
             OpCodeValue::Bge_Un,
@@ -202,11 +202,11 @@ impl Instruction {
     }
 
     pub fn is_ldstr(&self) -> bool {
-        vec![OpCodeValue::Ldstr].contains(&self.opcode.value)
+        [OpCodeValue::Ldstr].contains(&self.opcode.value)
     }
 
     pub fn is_ldc(&self) -> bool {
-        vec![
+        [
             OpCodeValue::Ldc_I4_M1,
             OpCodeValue::Ldc_I4_0,
             OpCodeValue::Ldc_I4_1,
@@ -252,7 +252,7 @@ impl Instruction {
     }
 
     pub fn is_ldarg(&self) -> bool {
-        vec![
+        [
             OpCodeValue::Ldarg,
             OpCodeValue::Ldarg_0,
             OpCodeValue::Ldarg_1,
@@ -284,7 +284,7 @@ impl Instruction {
     }
 
     pub fn is_starg(&self) -> bool {
-        vec![OpCodeValue::Starg, OpCodeValue::Starg_S].contains(&self.opcode.value)
+        [OpCodeValue::Starg, OpCodeValue::Starg_S].contains(&self.opcode.value)
     }
 
     pub fn get_starg(&self) -> Option<Argument> {
@@ -292,7 +292,7 @@ impl Instruction {
             Ok(s) => Some(s),
             _ => None,
         };
-        if vec![OpCodeValue::Starg, OpCodeValue::Starg_S].contains(&self.opcode.value) {
+        if [OpCodeValue::Starg, OpCodeValue::Starg_S].contains(&self.opcode.value) {
             s
         } else {
             None
@@ -300,7 +300,7 @@ impl Instruction {
     }
 
     pub fn is_ldloc(&self) -> bool {
-        vec![
+        [
             OpCodeValue::Ldloc,
             OpCodeValue::Ldloc_0,
             OpCodeValue::Ldarg_1,
@@ -332,7 +332,7 @@ impl Instruction {
     }
 
     pub fn is_stloc(&self) -> bool {
-        vec![
+        [
             OpCodeValue::Stloc,
             OpCodeValue::Stloc_0,
             OpCodeValue::Stloc_1,
