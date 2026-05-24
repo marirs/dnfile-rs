@@ -60,7 +60,32 @@ fn main() -> dnfile::Result<()> {
 }
 ```
 
-A full CLI dumper lives in [`examples/dnfile.rs`](examples/dnfile.rs):
+## Command-line tool: `dndump`
+
+`dndump` is a [Mandiant capa](https://github.com/mandiant/capa)-style inspector for .NET binaries. It prints the CLR header, metadata streams, populated tables, and the first methods discovered. Pre-built binaries for Linux / macOS / Windows are attached to each [GitHub release](https://github.com/marirs/dnfile-rs/releases).
+
+Install from source:
+
+```bash
+cargo install dnfile --features cli
+```
+
+Or build locally:
+
+```bash
+cargo build --release --features cli --bin dndump
+./target/release/dndump path/to/Sample.exe
+```
+
+Other useful invocations:
+
+```bash
+dndump --methods 100 Sample.exe        # show first 100 methods
+dndump --strings Sample.exe            # also dump #US user strings
+dndump --json Sample.exe > parsed.json # machine-readable output
+```
+
+A minimal library-usage example lives in [`examples/dnfile.rs`](examples/dnfile.rs):
 
 ```bash
 cargo run --example dnfile -- path/to/Sample.exe
