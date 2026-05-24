@@ -1,7 +1,8 @@
 use crate::{Result, error::Error};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum CorTypeVisibility {
+    #[default]
     NotPublic,
     Public,
     NestedPublic,
@@ -27,14 +28,9 @@ impl CorTypeVisibility {
     }
 }
 
-impl Default for CorTypeVisibility {
-    fn default() -> Self {
-        Self::NotPublic
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum CorTypeLayout {
+    #[default]
     AutoLayout,
     SequentialLayout,
     ExplicitLayout,
@@ -50,14 +46,9 @@ impl CorTypeLayout {
     }
 }
 
-impl Default for CorTypeLayout {
-    fn default() -> Self {
-        Self::AutoLayout
-    }
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum CorTypeSemantics {
+    #[default]
     Class,
     Interface,
 }
@@ -68,12 +59,6 @@ impl CorTypeSemantics {
             0x20 => Self::Interface,
             _ => Self::Class,
         }
-    }
-}
-
-impl Default for CorTypeSemantics {
-    fn default() -> Self {
-        Self::Class
     }
 }
 
@@ -128,8 +113,9 @@ impl CorTypeAttrFlags {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum CorTypeStringFormat {
+    #[default]
     AnsiClass,
     UnicodeClass,
     AutoClass,
@@ -144,12 +130,6 @@ impl CorTypeStringFormat {
             0x00030000 => Self::CustomFormatClass,
             _ => Self::AnsiClass,
         }
-    }
-}
-
-impl Default for CorTypeStringFormat {
-    fn default() -> Self {
-        Self::AnsiClass
     }
 }
 
@@ -667,8 +647,9 @@ impl ClrPinvokeMap {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub enum AssemblyHashAlgorithm {
+    #[default]
     None,
     Md5,
     Sha1,
@@ -687,12 +668,6 @@ impl AssemblyHashAlgorithm {
             0x800e => Self::Sha512,
             _ => Self::None,
         }
-    }
-}
-
-impl Default for AssemblyHashAlgorithm {
-    fn default() -> Self {
-        Self::None
     }
 }
 

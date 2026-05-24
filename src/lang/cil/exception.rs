@@ -16,6 +16,7 @@ pub struct ExceptionHandler {
 }
 
 impl ExceptionHandler {
+    #[must_use]
     pub fn new(exception_type: usize) -> Self {
         Self {
             exception_type,
@@ -24,7 +25,7 @@ impl ExceptionHandler {
             filter_start: -1,
             handler_start: -1,
             handler_end: -1,
-            ..Default::default()
+            catch_type: None,
         }
     }
 

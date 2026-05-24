@@ -4,18 +4,21 @@ use super::super::{enums::*, opcode::*};
 use crate::{Result, error::Error};
 use byteorder::ReadBytesExt;
 
-use std::io::Seek;
+use std::io::{Cursor, Seek};
 
-pub struct Reader {
-    cil_opcodes: OpCodes,
-    stream: std::io::BufReader<std::io::Cursor<Vec<u8>>>,
+/// Zero-copy CIL bytecode reader.
+///
+/// Borrows the underlying byte buffer (typically a slice into the parent
+/// `DnPe::data`) so parsing a function body does not allocate a copy of
+/// the whole file per method.
+pub struct Reader<'a> {
+    stream: Cursor<&'a [u8]>,
 }
 
-impl Reader {
-    pub fn new(bytes: &[u8]) -> Self {
+impl<'a> Reader<'a> {
+    pub fn new(bytes: &'a [u8]) -> Self {
         Self {
-            cil_opcodes: OpCodes::new(),
-            stream: std::io::BufReader::new(std::io::Cursor::new(bytes.to_vec())),
+            stream: Cursor::new(bytes),
         }
     }
 
@@ -27,7 +30,8 @@ impl Reader {
         Ok(self.stream.seek(std::io::SeekFrom::Start(pos as u64))? as usize)
     }
 
-    pub fn is_arg_operand_instruction(&mut self, insn: &Instruction) -> bool {
+    #[allow(clippy::unused_self)]
+    pub fn is_arg_operand_instruction(&self, insn: &Instruction) -> bool {
         [
             OpCodeValue::Ldarg,
             OpCodeValue::Ldarg_S,
@@ -201,12 +205,13 @@ impl Reader {
         let op_value_first = self.read_u8()? as usize;
         if op_value_first == 0xFE {
             let op_value_second = self.read_u8()? as usize;
-            Ok(self.cil_opcodes.two_byte_op_codes[op_value_second].clone())
+            Ok(OPCODES.two_byte_op_codes[op_value_second].clone())
         } else {
-            Ok(self.cil_opcodes.one_byte_op_codes[op_value_first].clone())
+            Ok(OPCODES.one_byte_op_codes[op_value_first].clone())
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn read_operand(&mut self, insn: &Instruction) -> Result<Operand> {
         match insn.opcode.operand_type {
             OperandType::InlineBrTarget => self.read_inline_br_target(insn),
@@ -231,5 +236,52 @@ impl Reader {
                 insn.opcode.operand_type.clone(),
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reader_borrows_input_without_copying() {
+        let buf = [0x01_u8, 0x02, 0x03, 0x04];
+        let mut r = Reader::new(&buf);
+        assert_eq!(r.tell().unwrap(), 0);
+        assert_eq!(r.read_u8().unwrap(), 0x01);
+        assert_eq!(r.tell().unwrap(), 1);
+    }
+
+    #[test]
+    fn reader_read_u16_little_endian() {
+        let mut r = Reader::new(&[0x34, 0x12]);
+        assert_eq!(r.read_u16().unwrap(), 0x1234);
+    }
+
+    #[test]
+    fn reader_read_u32_little_endian() {
+        let mut r = Reader::new(&[0x78, 0x56, 0x34, 0x12]);
+        assert_eq!(r.read_u32().unwrap(), 0x1234_5678);
+    }
+
+    #[test]
+    fn reader_read_i32_negative() {
+        let mut r = Reader::new(&[0xFF, 0xFF, 0xFF, 0xFF]);
+        assert_eq!(r.read_i32().unwrap(), -1_i32);
+    }
+
+    #[test]
+    fn reader_seek_and_tell() {
+        let mut r = Reader::new(&[0_u8; 16]);
+        r.seek(8).unwrap();
+        assert_eq!(r.tell().unwrap(), 8);
+        r.seek(0).unwrap();
+        assert_eq!(r.tell().unwrap(), 0);
+    }
+
+    #[test]
+    fn reader_read_past_end_errors() {
+        let mut r = Reader::new(&[]);
+        assert!(r.read_u8().is_err());
     }
 }

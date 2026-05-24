@@ -1,3 +1,11 @@
+// Several private helpers take `&u32` / `&usize` arguments for historical
+// reasons (these types are trivially `Copy`). Changing them ripples through
+// many call sites for no behavioural benefit.
+#![allow(clippy::trivially_copy_pass_by_ref)]
+// `ClrHeaderFlags::new` deliberately returns a `BTreeSet<Self>` (bitfield
+// expansion) rather than `Self` — this is part of the public API.
+#![allow(clippy::new_ret_no_self)]
+
 use serde::{Deserialize, Serialize};
 
 pub mod error;
@@ -17,18 +25,30 @@ pub struct DnPe {
     name: String,
     #[serde(skip_serializing)]
     data: Vec<u8>,
+    /// PE section table cached at construction.
+    /// Avoids re-parsing the whole PE on every `offset()` / `get_data()` call,
+    /// which is in the hot path of every metadata-table row and every CIL instruction.
+    #[serde(skip_serializing)]
+    sections: Vec<goblin::pe::section_table::SectionTable>,
+    /// PE optional-header `file_alignment` cached at construction (same reason).
+    #[serde(skip_serializing)]
+    file_alignment: u32,
     net: Option<ClrData>,
 }
 
 impl DnPe {
     pub fn net(&self) -> Result<&ClrData> {
-        match &self.net {
-            Some(s) => Ok(s),
-            None => Err(Error::NotImplementedError),
-        }
+        self.net.as_ref().ok_or(Error::NotImplementedError)
     }
 
-    pub fn pe(&self) -> Result<goblin::pe::PE> {
+    /// Re-parse and return a fresh `goblin::pe::PE` view over the file bytes.
+    ///
+    /// Internal hot-path code uses the cached `sections` + `file_alignment`
+    /// fields directly; this method is kept on the public surface for
+    /// consumers that need the full `goblin::pe::PE` value. Calling it is
+    /// linear in file size, so cache the result yourself if you need it
+    /// repeatedly.
+    pub fn pe(&self) -> Result<goblin::pe::PE<'_>> {
         match goblin::Object::parse(&self.data)? {
             goblin::Object::PE(pe) => Ok(pe),
             _ => Err(Error::UnsupportedBinaryFormat("main")),
@@ -36,18 +56,35 @@ impl DnPe {
     }
 
     pub fn new(name: &str) -> Result<DnPe> {
+        let data = std::fs::read(name)?;
+
+        // Parse the PE exactly once and extract the bits we'll need on the
+        // hot path. Previously every `offset()` / `get_data()` call re-parsed
+        // the entire binary via `self.pe()`.
+        let (sections, file_alignment, clr_directory) = {
+            let pe = match goblin::Object::parse(&data)? {
+                goblin::Object::PE(pe) => pe,
+                _ => return Err(Error::UnsupportedBinaryFormat("main")),
+            };
+            let opt_header = pe
+                .header
+                .optional_header
+                .ok_or(Error::UnsupportedBinaryFormat("optional header absence"))?;
+            let file_alignment = opt_header.windows_fields.file_alignment;
+            let clr_directory = opt_header
+                .data_directories
+                .get_clr_runtime_header()
+                .copied()
+                .ok_or(Error::UnsupportedBinaryFormat("ClR runtime header absence"))?;
+            (pe.sections.clone(), file_alignment, clr_directory)
+        };
+
         let mut res = DnPe {
             name: name.to_string(),
-            data: std::fs::read(name)?,
+            data,
+            sections,
+            file_alignment,
             net: None,
-        };
-        let opt_header = match res.pe()?.header.optional_header {
-            Some(oh) => oh,
-            None => return Err(Error::UnsupportedBinaryFormat("optional header absence")),
-        };
-        let clr_directory = match opt_header.data_directories.get_clr_runtime_header() {
-            Some(oh) => oh,
-            None => return Err(Error::UnsupportedBinaryFormat("ClR runtime header absence")),
         };
         let clr_struct: ClrStruct = res.get_data(
             &clr_directory.virtual_address,
@@ -58,43 +95,27 @@ impl DnPe {
     }
 
     fn offset(&self, rva: u32) -> Result<usize> {
-        let pe = self.pe()?;
-        let file_alignment = pe
-            .header
-            .optional_header
-            .ok_or(Error::UnsupportedBinaryFormat("optional header absence"))?
-            .windows_fields
-            .file_alignment;
-        match goblin::pe::utils::find_offset(
+        goblin::pe::utils::find_offset(
             rva as usize,
-            &pe.sections,
-            file_alignment,
+            &self.sections,
+            self.file_alignment,
             &goblin::pe::options::ParseOptions::default(),
-        ) {
-            Some(s) => Ok(s),
-            None => Err(Error::UnresolvedRvaError(rva)),
-        }
+        )
+        .ok_or(Error::UnresolvedRvaError(rva))
     }
 
     fn get_data<'a, T>(&'a self, rva: &'a u32, size: &'a usize) -> Result<T>
     where
         T: scroll::ctx::TryFromCtx<'a, goblin::container::Endian, Error = scroll::Error>,
     {
-        let pe = self.pe()?;
-        let file_alignment = pe
-            .header
-            .optional_header
-            .ok_or(Error::UnsupportedBinaryFormat("optional header absence"))?
-            .windows_fields
-            .file_alignment;
         Ok(goblin::pe::utils::get_data(
             &self.data,
-            &pe.sections,
+            &self.sections,
             goblin::pe::data_directories::DataDirectory {
                 virtual_address: *rva,
                 size: *size as u32,
             },
-            file_alignment,
+            self.file_alignment,
         )?)
     }
 
@@ -408,5 +429,44 @@ impl MetaData {
             }
         }
         Err(Error::UndefinedMetaDataTableName("US"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clr_header_flags_decodes_bits() {
+        let flags = ClrHeaderFlags::new(0b0000_0001);
+        assert!(flags.contains(&ClrHeaderFlags::IlOnly));
+        assert!(!flags.contains(&ClrHeaderFlags::BitRequired32));
+    }
+
+    #[test]
+    fn clr_header_flags_decodes_all_low_bits() {
+        let flags = ClrHeaderFlags::new(0x1F); // bits 0-4
+        for v in [
+            ClrHeaderFlags::IlOnly,
+            ClrHeaderFlags::BitRequired32,
+            ClrHeaderFlags::IlLibrary,
+            ClrHeaderFlags::StrongNamesSigned,
+            ClrHeaderFlags::NativeEntryPiont,
+        ] {
+            assert!(flags.contains(&v), "missing flag: {v:?}");
+        }
+    }
+
+    #[test]
+    fn clr_header_flags_decodes_high_bits() {
+        let flags = ClrHeaderFlags::new(0x30000); // bits 16 + 17
+        assert!(flags.contains(&ClrHeaderFlags::TrackDebugData));
+        assert!(flags.contains(&ClrHeaderFlags::Prefer32Bit));
+    }
+
+    #[test]
+    fn clr_header_flags_zero_value_is_empty() {
+        let flags = ClrHeaderFlags::new(0);
+        assert!(flags.is_empty());
     }
 }

@@ -1,5 +1,14 @@
 use super::super::cil::enums::*;
 use serde::Serialize;
+use std::sync::LazyLock;
+
+/// Process-wide CIL opcode table.
+///
+/// The opcode table is fully determined by the ECMA-335 spec and never
+/// changes at runtime. Building it once is essentially free (~512 entries)
+/// but doing so per-`Reader` was a per-function cost that scaled with the
+/// number of methods in the binary.
+pub static OPCODES: LazyLock<OpCodes> = LazyLock::new(OpCodes::new);
 
 #[derive(Debug, Clone, Serialize)]
 pub struct OpCode {
@@ -2155,5 +2164,34 @@ impl OpCodes {
         } else if (val as usize) >> 8 == 0xFE {
             self.two_byte_op_codes[val as usize & 0xFF] = op_code;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn opcodes_static_initialises_full_tables() {
+        assert_eq!(OPCODES.one_byte_op_codes.len(), 0x100);
+        assert_eq!(OPCODES.two_byte_op_codes.len(), 0x100);
+    }
+
+    #[test]
+    fn opcodes_static_is_callable_concurrently() {
+        // Force initialization on multiple threads to catch any Sync issues.
+        let handles: Vec<_> = (0..8)
+            .map(|_| std::thread::spawn(|| OPCODES.one_byte_op_codes.len()))
+            .collect();
+        for h in handles {
+            assert_eq!(h.join().unwrap(), 0x100);
+        }
+    }
+
+    #[test]
+    fn opcodes_static_yields_known_opcode_names() {
+        // Nop is one-byte opcode 0x00, Ret is one-byte 0x2A.
+        assert_eq!(OPCODES.one_byte_op_codes[0x00].name, "nop");
+        assert_eq!(OPCODES.one_byte_op_codes[0x2A].name, "ret");
     }
 }

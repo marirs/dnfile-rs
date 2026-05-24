@@ -23,6 +23,21 @@ scroll = "0.13"
 uuid = "1"
 byteorder = "1"
 
+# CLI-only dependencies. Pulled in only when the `cli` feature is enabled,
+# so library consumers don't pay for them.
+clap = { version = "4", features = ["derive"], optional = true }
+prettytable-rs = { version = "0.10", optional = true }
+
+[features]
+default = []
+# Enables the `dndump` binary (a Capa-style CLI inspector).
+cli = ["dep:clap", "dep:prettytable-rs"]
+
 [lib]
 name = "dnfile"
 path = "src/lib.rs"
+
+[[bin]]
+name = "dndump"
+path = "src/bin/dndump.rs"
+required-features = ["cli"]

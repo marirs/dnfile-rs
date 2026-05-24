@@ -15,7 +15,7 @@ impl UserStringHeap {
         let (data_length, length_size) = crate::utils::read_compressed_usize(
             self.data
                 .get(index..)
-                .ok_or_else(|| Error::UserStringHeapReadOutOfBound(index, self.data.len()))?,
+                .ok_or(Error::UserStringHeapReadOutOfBound(index, self.data.len()))?,
         )?;
 
         let end_index = index

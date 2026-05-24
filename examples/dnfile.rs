@@ -1,9 +1,9 @@
 pub fn main() -> dnfile::Result<()> {
-    for (i, arg) in std::env::args().enumerate() {
-        if i == 1 {
-            let df = dnfile::DnPe::new(arg.as_str())?;
-            println!("{:#02x?}", df);
-        }
-    }
+    let Some(arg) = std::env::args().nth(1) else {
+        eprintln!("usage: dnfile <path-to-.NET-PE>");
+        std::process::exit(2);
+    };
+    let df = dnfile::DnPe::new(arg.as_str())?;
+    println!("{df:#02x?}");
     Ok(())
 }

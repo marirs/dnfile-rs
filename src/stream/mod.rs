@@ -116,7 +116,7 @@ impl crate::DnPe {
                     stream_name,
                     stream_data,
                 )?,
-                &_ => return Err(Error::UndefinedStream),
+                _ => return Err(Error::UndefinedStream),
             },
         })
     }
@@ -127,15 +127,8 @@ impl crate::DnPe {
         stream_map: &std::collections::HashMap<String, ClrStream>,
     ) -> Result<ClrStream> {
         let mut res = stream.clone();
-        match &mut res.stream {
-            Stream::MetaDataTables(m) => {
-                m.tables = self.parse_meta_data_tables(m, stream_map)?;
-            }
-            Stream::GenericStream(_) => {}
-            Stream::StringHeap(_) => {}
-            Stream::BlobHeap(_) => {}
-            Stream::GuidHeap(_) => {}
-            Stream::UserStringHeap(_) => {}
+        if let Stream::MetaDataTables(m) = &mut res.stream {
+            m.tables = self.parse_meta_data_tables(m, stream_map)?;
         }
         Ok(res)
     }

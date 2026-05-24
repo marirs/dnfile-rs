@@ -24,7 +24,7 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(reader: &mut reader::Reader) -> Result<Self> {
+    pub fn new(reader: &mut reader::Reader<'_>) -> Result<Self> {
         let mut res = Self {
             offset: reader.tell()?,
             header_size: 0,
@@ -44,7 +44,7 @@ impl Function {
         Ok(res)
     }
 
-    pub fn parse_header(&mut self, reader: &mut reader::Reader) -> Result<()> {
+    pub fn parse_header(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
         let header_byte = reader.read_u8()? as usize;
         if [
             CorILMethod::TinyFormat as usize,
@@ -87,7 +87,7 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_instructions(&mut self, reader: &mut reader::Reader) -> Result<()> {
+    pub fn parse_instructions(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
         let mut current_offset = self.offset + self.header_size;
         let code_end_offset = reader.tell()? + self.code_size;
         while reader.tell()? < code_end_offset {
@@ -98,7 +98,7 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()> {
+    pub fn parse_exception_handlers(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
         if !self.flags.more_sects() {
             self.size = reader.tell()? - self.offset;
             return Ok(());
@@ -119,7 +119,7 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_fat_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()> {
+    pub fn parse_fat_exception_handlers(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
         let pos = reader.tell()? - 1;
         reader.seek(pos)?;
         let total_size = reader.read_u32()? >> 8;
@@ -143,7 +143,7 @@ impl Function {
         Ok(())
     }
 
-    pub fn parse_tiny_exception_handlers(&mut self, reader: &mut reader::Reader) -> Result<()> {
+    pub fn parse_tiny_exception_handlers(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
         let num_exceptions = reader.read_u8()? as usize;
         let pos = reader.tell()? + 2;
         reader.seek(pos)?;

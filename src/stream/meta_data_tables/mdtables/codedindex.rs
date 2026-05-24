@@ -1,3 +1,7 @@
+// The MDTable family passes column-set descriptors as `&Vec<&'static str>`;
+// see neighbouring `mdtables/mod.rs` for the rationale.
+#![allow(clippy::ptr_arg)]
+
 use crate::{Result, error::Error};
 
 pub fn clr_coded_index_struct_size(
@@ -7,11 +11,7 @@ pub fn clr_coded_index_struct_size(
 ) -> usize {
     let mut max_index = 0;
     for name in table_names {
-        let table_index = if let Ok(s) = super::table_name_2_index(name) {
-            s
-        } else {
-            0
-        };
+        let table_index = super::table_name_2_index(name).unwrap_or(0);
         let table_rowcnt = tables_row_counts[table_index];
         max_index = std::cmp::max(max_index, table_rowcnt);
     }

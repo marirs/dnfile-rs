@@ -27,3 +27,76 @@ pub fn read_compressed_usize(data: &[u8]) -> Result<(usize, usize)> {
         Err(Error::ReadCompressedUsize)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_usize_1_byte() {
+        assert_eq!(read_usize(&[0xAB]).unwrap(), 0xAB);
+    }
+
+    #[test]
+    fn read_usize_2_bytes_little_endian() {
+        assert_eq!(read_usize(&[0x34, 0x12]).unwrap(), 0x1234);
+    }
+
+    #[test]
+    fn read_usize_4_bytes_little_endian() {
+        assert_eq!(read_usize(&[0x78, 0x56, 0x34, 0x12]).unwrap(), 0x1234_5678);
+    }
+
+    #[test]
+    fn read_usize_8_bytes_little_endian() {
+        assert_eq!(
+            read_usize(&[0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01]).unwrap(),
+            0x0123_4567_89AB_CDEF
+        );
+    }
+
+    #[test]
+    fn read_usize_rejects_odd_lengths() {
+        assert!(read_usize(&[0x12, 0x34, 0x56]).is_err());
+    }
+
+    // ECMA-335 II.23.2 compressed-integer encoding tests:
+    #[test]
+    fn read_compressed_usize_one_byte_form() {
+        // Values 0..=0x7F encoded in a single byte.
+        assert_eq!(read_compressed_usize(&[0x00]).unwrap(), (0x00, 1));
+        assert_eq!(read_compressed_usize(&[0x03]).unwrap(), (0x03, 1));
+        assert_eq!(read_compressed_usize(&[0x7F]).unwrap(), (0x7F, 1));
+    }
+
+    #[test]
+    fn read_compressed_usize_two_byte_form() {
+        // Values 0x80..=0x3FFF encoded in two bytes with prefix 10.
+        // 0x80 -> bytes (0x80, 0x80).
+        assert_eq!(read_compressed_usize(&[0x80, 0x80]).unwrap(), (0x80, 2));
+        // 0x2E57 -> bytes (0xAE, 0x57)
+        assert_eq!(read_compressed_usize(&[0xAE, 0x57]).unwrap(), (0x2E57, 2));
+        // Maximum 2-byte value: 0x3FFF
+        assert_eq!(read_compressed_usize(&[0xBF, 0xFF]).unwrap(), (0x3FFF, 2));
+    }
+
+    #[test]
+    fn read_compressed_usize_four_byte_form() {
+        // Values 0x4000..=0x1FFF_FFFF encoded in four bytes with prefix 110.
+        assert_eq!(
+            read_compressed_usize(&[0xC0, 0x00, 0x40, 0x00]).unwrap(),
+            (0x4000, 4)
+        );
+        // Maximum 4-byte value: 0x1FFF_FFFF
+        assert_eq!(
+            read_compressed_usize(&[0xDF, 0xFF, 0xFF, 0xFF]).unwrap(),
+            (0x1FFF_FFFF, 4)
+        );
+    }
+
+    #[test]
+    fn read_compressed_usize_rejects_invalid_prefix() {
+        // 0xE0 has the 111 prefix which is not valid for unsigned compressed ints.
+        assert!(read_compressed_usize(&[0xE0, 0x00, 0x00, 0x00]).is_err());
+    }
+}

@@ -227,10 +227,7 @@ impl Instruction {
     }
 
     pub fn get_ldc(&self) -> Option<f64> {
-        let s = match self.operand.clone().try_into() {
-            Ok(s) => Some(s),
-            _ => None,
-        };
+        let s = self.operand.clone().try_into().ok();
         match self.opcode.value {
             OpCodeValue::Ldc_I4_M1 => Some(-1.0),
             OpCodeValue::Ldc_I4_0 => Some(0.0),
@@ -266,10 +263,7 @@ impl Instruction {
     }
 
     pub fn get_ldarg(&self) -> Option<Argument> {
-        let s = match self.operand.clone().try_into() {
-            Ok(s) => Some(s),
-            _ => None,
-        };
+        let s = self.operand.clone().try_into().ok();
         match &self.opcode.value {
             OpCodeValue::Ldarg
             | OpCodeValue::Ldarga
@@ -288,10 +282,7 @@ impl Instruction {
     }
 
     pub fn get_starg(&self) -> Option<Argument> {
-        let s = match self.operand.clone().try_into() {
-            Ok(s) => Some(s),
-            _ => None,
-        };
+        let s = self.operand.clone().try_into().ok();
         if [OpCodeValue::Starg, OpCodeValue::Starg_S].contains(&self.opcode.value) {
             s
         } else {
@@ -303,8 +294,8 @@ impl Instruction {
         [
             OpCodeValue::Ldloc,
             OpCodeValue::Ldloc_0,
-            OpCodeValue::Ldarg_1,
-            OpCodeValue::Ldarg_2,
+            OpCodeValue::Ldloc_1,
+            OpCodeValue::Ldloc_2,
             OpCodeValue::Ldloc_3,
             OpCodeValue::Ldloc_S,
             OpCodeValue::Ldloca,
@@ -314,10 +305,7 @@ impl Instruction {
     }
 
     pub fn get_ldoc(&self) -> Option<Local> {
-        let s = match self.operand.clone().try_into() {
-            Ok(s) => Some(s),
-            _ => None,
-        };
+        let s = self.operand.clone().try_into().ok();
         match self.opcode.value {
             OpCodeValue::Ldloc
             | OpCodeValue::Ldloc_S
@@ -344,10 +332,7 @@ impl Instruction {
     }
 
     pub fn get_stloc(&self) -> Option<Local> {
-        let s = match self.operand.clone().try_into() {
-            Ok(s) => Some(s),
-            _ => None,
-        };
+        let s = self.operand.clone().try_into().ok();
         match self.opcode.value {
             OpCodeValue::Stloc | OpCodeValue::Stloc_S => s,
             OpCodeValue::Stloc_0 => Some(Local::new(0)),

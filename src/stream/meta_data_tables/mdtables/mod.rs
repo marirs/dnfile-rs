@@ -1,4 +1,19 @@
 #![allow(clippy::too_many_arguments)]
+// The MDTable family of types passes column-set descriptors as `&Vec<&'static str>`
+// down to `clr_coded_index_struct_size` — changing the helper to `&[&'static str]`
+// would be a public-API break for that helper and ripple through every Default impl.
+// The cost is purely stylistic, so silence the lint at module scope.
+#![allow(clippy::useless_vec, clippy::ptr_arg)]
+// The MDTableRowTrait passes heap references as `&Option<&ClrStream>`. Refactoring
+// to `Option<&ClrStream>` is a trait-signature break.
+#![allow(clippy::ref_option)]
+// Several private helpers take `&u32` / `&usize` for historical consistency.
+#![allow(clippy::trivially_copy_pass_by_ref)]
+// `if let Some(s) = X { s } else { return Err(..); }` appears in dozens of
+// row parsers. Mechanical `let-else` rewrites are tracked separately; allow
+// for now to keep the diff focused on perf fixes.
+#![allow(clippy::manual_let_else)]
+
 use crate::{Result, error::Error};
 use serde::ser::{Serialize, SerializeSeq};
 
