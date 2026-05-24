@@ -76,6 +76,17 @@ with the caveat that 0.x minor versions can break.
   [u8]`); listing 1000s of resources from a fat assembly is essentially
   free.
 
+## [0.4.2] — 2026-05
+
+### Fixed
+
+- **Broken-pipe panic in `dndump` and `dnstrings`.** Both binaries now
+  reset `SIGPIPE` to `SIG_DFL` on Unix at startup, so piping into `head`,
+  `less`, or `grep -m` exits cleanly with code 141 instead of panicking
+  inside `println!`/`printstd()`. `dnstrings` additionally writes through
+  a `BufWriter<StdoutLock>` and gracefully exits on `ErrorKind::BrokenPipe`
+  for cross-platform safety (Windows doesn't deliver SIGPIPE).
+
 ### Security & robustness
 
 Hardened against crafted-input panics, infinite loops, and oversized
