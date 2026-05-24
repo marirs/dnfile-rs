@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.3.0). Must already exist."
+        description: "Tag to build artifacts for (e.g. v0.3.0). Must already exist."
         required: true
 
 permissions:
@@ -18,7 +18,7 @@ env:
 
 jobs:
   verify:
-    name: verify build before publish
+    name: verify build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,6 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test --all-features
-      - run: cargo publish --dry-run
 
   build-cli:
     name: build dndump (${{ matrix.target }})
@@ -137,22 +136,9 @@ jobs:
             dndump-*.zip.sha256
           if-no-files-found: error
 
-  publish:
-    name: publish to crates.io
-    needs: verify
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - name: Publish
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish --token "$CARGO_REGISTRY_TOKEN"
-
   github-release:
     name: create GitHub release
-    needs: [publish, build-cli]
+    needs: build-cli
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -191,7 +177,7 @@ jobs:
             echo "Pre-built \`dndump\` binaries are attached below for:"
             echo "- Linux x86_64 / aarch64"
             echo "- macOS x86_64 / aarch64"
-            echo "- Windows x86_64"
+            echo "- Windows x86_64 / aarch64"
             echo EOF
           } >> "$GITHUB_OUTPUT"
 
