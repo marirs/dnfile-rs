@@ -6,6 +6,76 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 with the caveat that 0.x minor versions can break.
 
+## [0.4.1] — 2026-05
+
+### Added
+
+- **Managed-resource enumeration.** New module `dnfile::resource` with
+  `DotNetResource`, `ResourceLocation`. `DnPe::resources()` walks the
+  `ManifestResource` table and returns one entry per resource, with
+  embedded resource bytes resolved as borrowed slices into the file
+  buffer.
+- **Assembly identity accessor.** `ClrData::assembly()` returns the
+  `Assembly` table's row 0 (name / version / culture / public-key /
+  flags / hash algorithm).
+- **CLR resources directory accessors.** `DnPe::resources_rva()` and
+  `DnPe::resources_size()` expose the bounds of the resources directory
+  from the CLR header.
+- **New CLI binary `dnstrings`** (behind the `cli` feature). Scans every
+  function body for `ldstr` opcodes, resolves the `#US` user-string
+  reference, and prints `function-offset:ip  string`. Useful for triaging
+  .NET malware that hides payloads in user strings.
+- **`dndump` new flags:**
+  - `--assembly` — print Assembly identity (name, version, culture, public
+    key size, flags).
+  - `--resources` — list ManifestResource entries (name, location, size,
+    flags).
+  - `--show-rows N` — for the most analyst-relevant metadata tables, print
+    the first `N` rows via each row type's `Debug` format.
+- **Public field exposure.** `Assembly`, `AssemblyRef`, `File`, and
+  `ManifestResource` row structs now have `pub` fields (was private).
+- **`MDTableRowTrait: std::fmt::Debug`** — supertrait bound, so
+  `&dyn MDTableRowTrait` can be `{:?}`-formatted. All existing impls
+  already derive `Debug`; no consumer impact.
+
+### Fixed
+
+- **Coded-index resolution is now permissive at parse time.** ECMA-335
+  rid-zero null references and references to unpopulated optional tables
+  (`File`, `ExportedType`, `ManifestResource`) no longer abort the parse.
+  Validation is deferred to `ClrData::resolve_coded_index`, which still
+  returns a clean `Err` when a non-null reference points at a missing
+  row. This unblocks parsing of real-world .NET binaries (including
+  malware) that were previously rejected with a bare `"File"` error.
+- **Error display chain.** `error::Error::ParseError`,
+  `RegexError` (since removed), `IoError` now include the wrapped error's
+  message instead of swallowing it. `dndump` walks the `source()` chain
+  on failure.
+
+### Removed (minor breaking)
+
+- **`regex` dependency** — never used anywhere in this crate; declaration
+  was stale.
+- **`Error::RegexError` variant** — same reason. Removing it deletes the
+  derived `From<regex::Error> for Error` impl. Any external code using
+  `?` to convert a `regex::Error` into a `dnfile::Error` will need to
+  convert manually. No in-tree caller is affected.
+- **`walkdir` dependency** — never used anywhere in this crate; another
+  stale declaration.
+
+### Dependencies
+
+- `serde_json` is now an optional dep, gated behind the `cli` feature
+  (was previously a hard dep but only used by `dndump --json`). Library
+  consumers without `--features cli` no longer pull serde_json into
+  their dependency tree.
+
+### Performance
+
+- Resources are exposed as borrowed slices into the file buffer (`&'a
+  [u8]`); listing 1000s of resources from a fat assembly is essentially
+  free.
+
 ## [0.4.0] — 2026-05
 
 ### Changed (breaking)

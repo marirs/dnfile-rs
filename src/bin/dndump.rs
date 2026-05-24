@@ -31,12 +31,26 @@ struct Args {
     #[arg(long, default_value_t = 20)]
     methods: usize,
 
+    /// Print the Assembly identity (name, version, culture, public key, flags).
+    #[arg(long)]
+    assembly: bool,
+
+    /// List ManifestResource entries (name, kind, size).
+    #[arg(long)]
+    resources: bool,
+
+    /// For each non-empty metadata table, print up to this many sample rows.
+    /// 0 disables the per-table row dump.
+    #[arg(long, default_value_t = 0)]
+    show_rows: usize,
+
     /// Emit the full structured result as JSON instead of tables.
     #[arg(long)]
     json: bool,
 }
 
 fn main() -> ExitCode {
+    reset_sigpipe();
     let args = Args::parse();
     match run(args) {
         Ok(()) => ExitCode::SUCCESS,
@@ -49,6 +63,33 @@ fn main() -> ExitCode {
                 src = cause.source();
             }
             ExitCode::from(1)
+        }
+    }
+}
+
+/// Restore the default SIGPIPE behaviour on Unix so that piping into
+/// `head`, `less`, etc. causes a clean exit instead of an EPIPE panic
+/// from inside `println!` / `prettytable::printstd()`.
+///
+/// Rust's startup code installs an SIGPIPE handler that converts the signal
+/// into an `ErrorKind::BrokenPipe` on the next write — `println!` then
+/// panics because its `Display` write returned an error. Resetting SIGPIPE
+/// to `SIG_DFL` means the process terminates the way `cat` / `grep` do.
+///
+/// No-op on Windows (pipe semantics are different there and this isn't a
+/// real problem).
+fn reset_sigpipe() {
+    #[cfg(unix)]
+    {
+        // SIGPIPE = 13 and SIG_DFL = 0 are POSIX-standardised. We avoid
+        // pulling in `libc` for this one call.
+        unsafe extern "C" {
+            fn signal(signum: i32, handler: usize) -> usize;
+        }
+        const SIGPIPE: i32 = 13;
+        const SIG_DFL: usize = 0;
+        unsafe {
+            signal(SIGPIPE, SIG_DFL);
         }
     }
 }
@@ -72,6 +113,18 @@ fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     print_clr_header(clr);
     print_streams(clr);
     print_tables(clr);
+
+    if args.assembly {
+        print_assembly(clr);
+    }
+
+    if args.resources {
+        print_resources(&pe);
+    }
+
+    if args.show_rows > 0 {
+        print_sample_rows(clr, args.show_rows);
+    }
 
     if args.methods > 0 {
         print_methods(clr, args.methods);
@@ -258,4 +311,129 @@ fn capa_style_table() -> Table {
     let mut t = Table::new();
     t.set_format(*format::consts::FORMAT_BOX_CHARS);
     t
+}
+
+fn print_assembly(clr: &dnfile::ClrData) {
+    let mut table = capa_style_table();
+    table.set_titles(row![bH2c => "Assembly Identity"]);
+
+    match clr.assembly() {
+        Ok(a) => {
+            table.add_row(row!["name", a.name]);
+            table.add_row(row![
+                "version",
+                format!(
+                    "{}.{}.{}.{}",
+                    a.major_version, a.minor_version, a.build_number, a.revision_number
+                )
+            ]);
+            let culture = if a.culture.is_empty() {
+                "(neutral)".to_string()
+            } else {
+                a.culture.clone()
+            };
+            table.add_row(row!["culture", culture]);
+            table.add_row(row!["hash-algorithm", format!("{:?}", a.hash_alg_id)]);
+            let flags: Vec<String> = a.flags.iter().map(|f| format!("{f:?}")).collect();
+            table.add_row(row![
+                "flags",
+                if flags.is_empty() {
+                    "(none)".into()
+                } else {
+                    flags.join(", ")
+                }
+            ]);
+            table.add_row(row!["public-key", format!("{} bytes", a.public_key.len())]);
+        }
+        Err(_) => {
+            table.add_row(row!["(no Assembly row)", ""]);
+        }
+    }
+    println!();
+    table.printstd();
+}
+
+fn print_resources(pe: &dnfile::DnPe) {
+    let mut table = capa_style_table();
+    table.set_titles(row![bH4c => "Managed Resources"]);
+    table.add_row(row![b => "name", "location", "size", "flags"]);
+
+    let resources = pe.resources().unwrap_or_default();
+    if resources.is_empty() {
+        table.add_row(row!["(none)", "", "", ""]);
+    } else {
+        for r in &resources {
+            let location = match &r.location {
+                dnfile::resource::ResourceLocation::Embedded => "Embedded".to_string(),
+                dnfile::resource::ResourceLocation::External { file } => {
+                    format!("External({file})")
+                }
+                dnfile::resource::ResourceLocation::Linked { assembly } => {
+                    format!("Linked({assembly})")
+                }
+            };
+            let size = match r.data {
+                Some(d) => format!("{} bytes", d.len()),
+                None => "(external)".to_string(),
+            };
+            let flags = r
+                .flags
+                .iter()
+                .map(|f| format!("{f:?}"))
+                .collect::<Vec<_>>()
+                .join(", ");
+            table.add_row(Row::new(vec![
+                Cell::new(&r.name),
+                Cell::new(&location),
+                Cell::new(&size),
+                Cell::new(&flags),
+            ]));
+        }
+    }
+    println!();
+    table.printstd();
+}
+
+/// For each non-empty metadata table, print up to `limit` sample rows via
+/// the row's `Debug` impl.
+fn print_sample_rows(clr: &dnfile::ClrData, limit: usize) {
+    const KNOWN_TABLES: &[&str] = &[
+        "Module",
+        "TypeRef",
+        "TypeDef",
+        "Field",
+        "MethodDef",
+        "Param",
+        "MemberRef",
+        "CustomAttribute",
+        "Assembly",
+        "AssemblyRef",
+        "ManifestResource",
+        "File",
+        "ExportedType",
+        "ModuleRef",
+        "ImplMap",
+        "NestedClass",
+    ];
+
+    for name in KNOWN_TABLES {
+        let Ok(t) = clr.md_table(name) else { continue };
+        if t.row_count() == 0 {
+            continue;
+        }
+        let mut table = capa_style_table();
+        table.set_titles(
+            row![bH2c => format!("{name} (first {} of {})", limit.min(t.row_count()), t.row_count())],
+        );
+        table.add_row(row![b => "rid", "row (Debug)"]);
+        for i in 0..t.row_count().min(limit) {
+            let row_str = match t.get_row(i) {
+                Ok(r) => format!("{:?}", r.get_row()),
+                Err(e) => format!("<error: {e}>"),
+            };
+            table.add_row(row![format!("{}", i + 1), row_str]);
+        }
+        println!();
+        table.printstd();
+    }
 }

@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod error;
 pub mod lang;
+pub mod resource;
 pub mod stream;
 pub mod utils;
 
@@ -47,6 +48,13 @@ pub struct DnPe<'a> {
     /// PE optional-header `file_alignment` cached at construction (same reason).
     #[serde(skip_serializing)]
     file_alignment: u32,
+    /// CLR resources directory RVA (from `ClrStruct.resources_rva`). Used by
+    /// `resources()` to locate the bytes of each `ManifestResource` entry.
+    #[serde(skip_serializing)]
+    pub(crate) resources_rva: u32,
+    /// CLR resources directory size.
+    #[serde(skip_serializing)]
+    pub(crate) resources_size: u32,
     net: Option<ClrData<'a>>,
 }
 
@@ -63,10 +71,7 @@ impl<'a> DnPe<'a> {
     /// linear in file size, so cache the result yourself if you need it
     /// repeatedly.
     pub fn pe(&self) -> Result<goblin::pe::PE<'_>> {
-        match goblin::Object::parse(self.data)? {
-            goblin::Object::PE(pe) => Ok(pe),
-            _ => Err(Error::UnsupportedBinaryFormat("main")),
-        }
+        Ok(goblin::pe::PE::parse(self.data)?)
     }
 
     /// Parse a .NET PE from a borrowed byte buffer.
@@ -78,10 +83,7 @@ impl<'a> DnPe<'a> {
         // hot path. Previously every `offset()` / `get_data()` call re-parsed
         // the entire binary via `self.pe()`.
         let (sections, file_alignment, clr_directory) = {
-            let pe = match goblin::Object::parse(data)? {
-                goblin::Object::PE(pe) => pe,
-                _ => return Err(Error::UnsupportedBinaryFormat("main")),
-            };
+            let pe = goblin::pe::PE::parse(data)?;
             let opt_header = pe
                 .header
                 .optional_header
@@ -99,12 +101,16 @@ impl<'a> DnPe<'a> {
             data,
             sections,
             file_alignment,
+            resources_rva: 0,
+            resources_size: 0,
             net: None,
         };
         let clr_struct: ClrStruct = res.get_data(
             &clr_directory.virtual_address,
             &(clr_directory.size as usize),
         )?;
+        res.resources_rva = clr_struct.resources_rva;
+        res.resources_size = clr_struct.resources_size;
         res.net = Some(res.new_clrdata(clr_struct)?);
         Ok(res)
     }
@@ -162,6 +168,19 @@ impl<'a> DnPe<'a> {
 
     fn get_dword_at_rva(&self, rva: &u32) -> Result<u32> {
         self.get_data(rva, &4)
+    }
+
+    /// Returns the RVA of the CLR resources directory (from the CLR header).
+    /// 0 if the binary has no resources directory.
+    #[must_use]
+    pub fn resources_rva(&self) -> u32 {
+        self.resources_rva
+    }
+
+    /// Returns the size (bytes) of the CLR resources directory.
+    #[must_use]
+    pub fn resources_size(&self) -> u32 {
+        self.resources_size
     }
 
     fn new_clrdata(&self, clr_struct: ClrStruct) -> Result<ClrData<'a>> {
@@ -384,6 +403,20 @@ impl<'a> ClrData<'a> {
 
     pub fn get_us(&self, rid: usize) -> Result<String> {
         self.metadata.get_us(rid)
+    }
+
+    /// Returns the binary's `Assembly` table row 0, if it has one.
+    ///
+    /// A .NET assembly (an `.exe` or a top-level `.dll` that defines an
+    /// assembly identity) always has exactly one row here. Module-only DLLs
+    /// (rare; e.g. `netmodule`s linked into an assembly) have an empty
+    /// `Assembly` table and this returns `Err(UndefinedMetaDataTableName)`.
+    pub fn assembly(&self) -> Result<&stream::meta_data_tables::mdtables::Assembly> {
+        let table = self.md_table("Assembly")?;
+        if table.row_count() == 0 {
+            return Err(Error::UndefinedMetaDataTableName("Assembly"));
+        }
+        table.row::<stream::meta_data_tables::mdtables::Assembly>(0)
     }
 }
 

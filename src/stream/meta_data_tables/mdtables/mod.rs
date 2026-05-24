@@ -152,7 +152,7 @@ where
     }
 }
 
-pub trait MDTableRowTrait {
+pub trait MDTableRowTrait: std::fmt::Debug {
     fn size(
         &self,
         str_offset_size: usize,
@@ -2048,15 +2048,15 @@ impl MDTableRowTrait for EncMap {
 
 #[derive(Debug, Clone, Default)]
 pub struct Assembly {
-    hash_alg_id: enums::AssemblyHashAlgorithm,
-    major_version: u32,
-    minor_version: u32,
-    build_number: u32,
-    revision_number: u32,
-    flags: Vec<enums::ClrAssemblyFlags>,
-    public_key: Vec<u8>,
-    name: String,
-    culture: String,
+    pub hash_alg_id: enums::AssemblyHashAlgorithm,
+    pub major_version: u32,
+    pub minor_version: u32,
+    pub build_number: u32,
+    pub revision_number: u32,
+    pub flags: Vec<enums::ClrAssemblyFlags>,
+    pub public_key: Vec<u8>,
+    pub name: String,
+    pub culture: String,
 }
 
 impl MDTableRowTrait for Assembly {
@@ -2205,14 +2205,14 @@ impl MDTableRowTrait for AssemblyOS {
 
 #[derive(Debug, Clone, Default)]
 pub struct AssemblyRef {
-    major_version: u32,
-    minor_version: u32,
-    build_number: u32,
-    revision_number: u32,
-    flags: Vec<enums::ClrAssemblyFlags>,
-    public_key: Vec<u8>,
-    name: String,
-    culture: String,
+    pub major_version: u32,
+    pub minor_version: u32,
+    pub build_number: u32,
+    pub revision_number: u32,
+    pub flags: Vec<enums::ClrAssemblyFlags>,
+    pub public_key: Vec<u8>,
+    pub name: String,
+    pub culture: String,
     hash_value: Vec<u8>,
 }
 
@@ -2381,9 +2381,9 @@ impl MDTableRowTrait for AssemblyRefOS {
 
 #[derive(Debug, Clone, Default)]
 pub struct File {
-    flags: Vec<enums::ClrFileFlags>,
-    name: String,
-    hash_value: Vec<u8>,
+    pub flags: Vec<enums::ClrFileFlags>,
+    pub name: String,
+    pub hash_value: Vec<u8>,
 }
 
 impl MDTableRowTrait for File {
@@ -2504,10 +2504,10 @@ impl MDTableRowTrait for ExportedType {
 
 #[derive(Debug, Clone, Default)]
 pub struct ManifestResource {
-    offset: u32,
-    flags: Vec<enums::ClrManifestResourceFlags>,
-    name: String,
-    implementation: codedindex::Implementation,
+    pub offset: u32,
+    pub flags: Vec<enums::ClrManifestResourceFlags>,
+    pub name: String,
+    pub implementation: codedindex::Implementation,
 }
 
 impl MDTableRowTrait for ManifestResource {

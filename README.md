@@ -27,7 +27,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-dnfile = "0.4"
+dnfile = "0.4"   # latest 0.4.x (0.4.1 adds resources() + assembly() helpers)
 ```
 
 Then:
@@ -93,7 +93,18 @@ Other useful invocations:
 ```bash
 dndump --methods 100 Sample.exe        # show first 100 methods
 dndump --strings Sample.exe            # also dump #US user strings
+dndump --assembly Sample.exe           # Assembly identity (name/version/culture/...)
+dndump --resources Sample.exe          # ManifestResource entries
+dndump --show-rows 5 Sample.exe        # first 5 rows of each non-empty table
 dndump --json Sample.exe > parsed.json # machine-readable output
+```
+
+For .NET-specific string triage there's a sibling binary `dnstrings`:
+
+```bash
+cargo install dnfile --features cli   # installs both dndump and dnstrings
+dnstrings Sample.exe                  # function-offset:ip  string
+dnstrings --tsv --min-len 8 Sample.exe
 ```
 
 A minimal library-usage example lives in [`examples/dnfile.rs`](examples/dnfile.rs):

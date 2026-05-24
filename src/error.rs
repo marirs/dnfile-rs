@@ -1,7 +1,5 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("regex error: {0}")]
-    RegexError(#[from] regex::Error),
     #[error("PE parse error: {0}")]
     ParseError(#[from] goblin::error::Error),
     #[error("unsupported binary format: {0}")]
