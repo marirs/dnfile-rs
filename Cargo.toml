@@ -3,9 +3,12 @@ name = "dnfile"
 version = "0.2.3"
 description = ".NET binary extractor"
 authors = ["Marirs <marirs@gmail.com>", "Andrey Mnatsakanov <andrey@3ig.kiev.ua>", "Jorge Alejandro Durán Royo<jorge.duran.royo@gmail.com>"]
-keywords = [".NET", "binary", "extractor", "file"]
+keywords = ["dotnet", "binary", "extractor", "pe"]
+categories = ["parsing"]
 readme = "README.md"
-license-file = "LICENSE"
+license = "Apache-2.0"
+repository = "https://github.com/marirs/dnfile-rs"
+homepage = "https://github.com/marirs/dnfile-rs"
 edition = "2021"
 
 [dependencies]
