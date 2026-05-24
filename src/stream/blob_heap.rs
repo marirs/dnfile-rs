@@ -34,10 +34,7 @@ impl<'a> BlobHeap<'a> {
             .checked_add(data_length)
             .ok_or(Error::BlobHeapReadOutOfBound(index, self.data.len()))?;
         if payload_end > self.data.len() {
-            return Err(Error::BlobHeapReadOutOfBound(
-                payload_end,
-                self.data.len(),
-            ));
+            return Err(Error::BlobHeapReadOutOfBound(payload_end, self.data.len()));
         }
         Ok(&self.data[payload_start..payload_end])
     }

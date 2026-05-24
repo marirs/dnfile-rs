@@ -158,9 +158,7 @@ impl<'a> DnPe<'a> {
                 return Err(Error::UnresolvedRvaError(rrva));
             }
             res_buf.push(c);
-            rrva = rrva
-                .checked_add(1)
-                .ok_or(Error::UnresolvedRvaError(rrva))?;
+            rrva = rrva.checked_add(1).ok_or(Error::UnresolvedRvaError(rrva))?;
         }
         Ok(String::from_utf8(res_buf)?)
     }

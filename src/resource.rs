@@ -143,9 +143,7 @@ impl<'a> crate::DnPe<'a> {
         // `get_slice` (which also bounds-checks). This means a corrupted
         // length doesn't blow up the parse — we just return the smaller
         // valid slice.
-        let payload_rva = abs
-            .checked_add(4)
-            .ok_or(Error::UnresolvedRvaError(abs))?;
+        let payload_rva = abs.checked_add(4).ok_or(Error::UnresolvedRvaError(abs))?;
         let max = self
             .resources_size
             .saturating_sub(manifest_offset.saturating_add(4));

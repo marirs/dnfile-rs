@@ -147,11 +147,7 @@ impl<'a> Reader<'a> {
         // Each branch is 4 bytes. Reject if the table can't possibly fit
         // in the remainder of the file buffer — otherwise a crafted
         // `num_branches == u32::MAX` would attempt a ~16 GB allocation.
-        let remaining = self
-            .stream
-            .get_ref()
-            .len()
-            .saturating_sub(self.tell()?);
+        let remaining = self.stream.get_ref().len().saturating_sub(self.tell()?);
         let needed = num_branches
             .checked_mul(4)
             .ok_or(Error::MethodBodyFormatError(
@@ -171,20 +167,18 @@ impl<'a> Reader<'a> {
             .ok_or(Error::MethodBodyFormatError(
                 "switch table size overflow".to_string(),
             ))?;
-        let offset_after_insn = insn
-            .offset
-            .checked_add(table_size)
-            .ok_or(Error::MethodBodyFormatError(
-                "switch offset_after_insn overflow".to_string(),
-            ))?;
+        let offset_after_insn =
+            insn.offset
+                .checked_add(table_size)
+                .ok_or(Error::MethodBodyFormatError(
+                    "switch offset_after_insn overflow".to_string(),
+                ))?;
         let mut branches = Vec::with_capacity(num_branches);
         for _ in 0..num_branches {
             let branch_offset = self.read_u32()? as usize;
-            let target = offset_after_insn
-                .checked_add(branch_offset)
-                .ok_or(Error::MethodBodyFormatError(
-                    "switch branch target overflow".to_string(),
-                ))?;
+            let target = offset_after_insn.checked_add(branch_offset).ok_or(
+                Error::MethodBodyFormatError("switch branch target overflow".to_string()),
+            )?;
             branches.push(Operand::Int(target as i64));
         }
         Ok(Operand::Arguments(branches))

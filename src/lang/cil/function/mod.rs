@@ -86,18 +86,19 @@ impl Function {
     }
 
     pub fn parse_instructions(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
-        let mut current_offset = self
-            .offset
-            .checked_add(self.header_size)
-            .ok_or(Error::MethodBodyFormatError(
-                "method offset+header_size overflow".to_string(),
-            ))?;
-        let code_end_offset = reader
-            .tell()?
-            .checked_add(self.code_size)
-            .ok_or(Error::MethodBodyFormatError(
-                "method code_size overflow".to_string(),
-            ))?;
+        let mut current_offset =
+            self.offset
+                .checked_add(self.header_size)
+                .ok_or(Error::MethodBodyFormatError(
+                    "method offset+header_size overflow".to_string(),
+                ))?;
+        let code_end_offset =
+            reader
+                .tell()?
+                .checked_add(self.code_size)
+                .ok_or(Error::MethodBodyFormatError(
+                    "method code_size overflow".to_string(),
+                ))?;
         while reader.tell()? < code_end_offset {
             let insn = reader.read_instruction(current_offset)?;
             // Defensive: a zero-size instruction would loop forever. The
@@ -109,9 +110,12 @@ impl Function {
                     "zero-size instruction".to_string(),
                 ));
             }
-            current_offset = current_offset.checked_add(isize).ok_or(
-                Error::MethodBodyFormatError("instruction offset overflow".to_string()),
-            )?;
+            current_offset =
+                current_offset
+                    .checked_add(isize)
+                    .ok_or(Error::MethodBodyFormatError(
+                        "instruction offset overflow".to_string(),
+                    ))?;
             self.instructions.push(insn);
         }
         Ok(())
