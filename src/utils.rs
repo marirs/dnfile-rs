@@ -11,17 +11,21 @@ pub fn read_usize(data: &[u8]) -> Result<usize> {
 }
 
 pub fn read_compressed_usize(data: &[u8]) -> Result<(usize, usize)> {
-    if data[0] & 0x80 == 0 {
-        Ok((data[0] as usize, 1))
-    } else if data[0] & 0x40 == 0 {
-        let mut value = (data[0] as usize & 0x7F) << 8;
-        value |= data[1] as usize;
+    let b0 = *data.first().ok_or(Error::ReadCompressedUsize)?;
+    if b0 & 0x80 == 0 {
+        Ok((b0 as usize, 1))
+    } else if b0 & 0x40 == 0 {
+        let b1 = *data.get(1).ok_or(Error::ReadCompressedUsize)?;
+        let value = ((b0 as usize & 0x7F) << 8) | b1 as usize;
         Ok((value, 2))
-    } else if data[0] & 0x20 == 0 {
-        let mut value = (data[0] as usize & 0x3F) << 24;
-        value |= (data[1] as usize) << 16;
-        value |= (data[2] as usize) << 8;
-        value |= data[3] as usize;
+    } else if b0 & 0x20 == 0 {
+        let b1 = *data.get(1).ok_or(Error::ReadCompressedUsize)?;
+        let b2 = *data.get(2).ok_or(Error::ReadCompressedUsize)?;
+        let b3 = *data.get(3).ok_or(Error::ReadCompressedUsize)?;
+        let value = ((b0 as usize & 0x3F) << 24)
+            | ((b1 as usize) << 16)
+            | ((b2 as usize) << 8)
+            | b3 as usize;
         Ok((value, 4))
     } else {
         Err(Error::ReadCompressedUsize)

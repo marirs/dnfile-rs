@@ -140,14 +140,27 @@ impl<'a> DnPe<'a> {
         )?)
     }
 
+    /// Defensive null-terminated string reader. Bounds-checked indexing,
+    /// checked-add on RVA, and a hard cap on length (1 KiB — covers every
+    /// legitimate ECMA-335 use; stream names are at most 31 characters,
+    /// metadata-version strings even less).
     fn get_nullterminated_string(&self, rva: &u32) -> Result<String> {
-        let mut res_buf = vec![];
+        const MAX_LEN: usize = 1024;
+        let mut res_buf = Vec::with_capacity(32);
         let mut rrva = *rva;
-        let mut c = self.data[self.offset(rrva)?];
-        while c != 0 {
+        loop {
+            let off = self.offset(rrva)?;
+            let c = *self.data.get(off).ok_or(Error::UnresolvedRvaError(rrva))?;
+            if c == 0 {
+                break;
+            }
+            if res_buf.len() >= MAX_LEN {
+                return Err(Error::UnresolvedRvaError(rrva));
+            }
             res_buf.push(c);
-            rrva += 1;
-            c = self.data[self.offset(rrva)?];
+            rrva = rrva
+                .checked_add(1)
+                .ok_or(Error::UnresolvedRvaError(rrva))?;
         }
         Ok(String::from_utf8(res_buf)?)
     }
@@ -156,8 +169,11 @@ impl<'a> DnPe<'a> {
     /// helper to keep stream/heap construction zero-copy.
     fn get_slice(&self, rva: &u32, size: usize) -> Result<&'a [u8]> {
         let offset = self.offset(*rva)?;
+        let end = offset
+            .checked_add(size)
+            .ok_or(Error::UnresolvedRvaError(*rva))?;
         self.data
-            .get(offset..offset + size)
+            .get(offset..end)
             .ok_or(Error::UnresolvedRvaError(*rva))
     }
 
@@ -234,19 +250,31 @@ impl<'a> DnPe<'a> {
         metadata_rva: &u32,
         metadata_struct: MetaDataStruct,
     ) -> Result<MetaData<'a>> {
-        let version_offset = self.offset(metadata_rva + 16)?;
-        let version = self.data
-            [version_offset..version_offset + metadata_struct.version_length as usize]
+        // All RVA arithmetic here is over attacker-controlled u32s.
+        let after_signature_rva = metadata_rva
+            .checked_add(16)
+            .ok_or(Error::UnresolvedRvaError(*metadata_rva))?;
+        let version_offset = self.offset(after_signature_rva)?;
+        let version_end = version_offset
+            .checked_add(metadata_struct.version_length as usize)
+            .ok_or(Error::UnresolvedRvaError(after_signature_rva))?;
+        let version = self
+            .data
+            .get(version_offset..version_end)
+            .ok_or(Error::UnresolvedRvaError(after_signature_rva))?
             .to_vec();
-        let flags: u16 =
-            self.get_data(&(metadata_rva + 16 + metadata_struct.version_length), &2)?;
-        let number_of_streams: u16 = self.get_data(
-            &(metadata_rva + 16 + metadata_struct.version_length + 2),
-            &2,
-        )?;
-        let struct_size = 16 + metadata_struct.version_length + 2 + 2;
+        let after_version_rva = after_signature_rva
+            .checked_add(metadata_struct.version_length)
+            .ok_or(Error::UnresolvedRvaError(after_signature_rva))?;
+        let flags: u16 = self.get_data(&after_version_rva, &2)?;
+        let after_flags_rva = after_version_rva
+            .checked_add(2)
+            .ok_or(Error::UnresolvedRvaError(after_version_rva))?;
+        let number_of_streams: u16 = self.get_data(&after_flags_rva, &2)?;
+        let streams_table_rva = after_flags_rva
+            .checked_add(2)
+            .ok_or(Error::UnresolvedRvaError(after_flags_rva))?;
         let streams = if number_of_streams > 0 {
-            let streams_table_rva = metadata_rva + struct_size;
             self.new_streams(
                 metadata_rva,
                 &streams_table_rva,
@@ -268,14 +296,21 @@ impl<'a> DnPe<'a> {
         streams_table_rva: &u32,
         number_of_streams: &usize,
     ) -> Result<std::collections::HashMap<String, stream::ClrStream<'a>>> {
-        let mut res = std::collections::HashMap::new();
+        // Defensive cap. ECMA-335 has no fixed upper bound but real files
+        // have ≤ ~6 streams; a malformed `number_of_streams` (u16, so ≤ 65535)
+        // could otherwise drive a 65k-iteration loop full of failing parses.
+        const MAX_STREAMS: usize = 64;
+        let n = (*number_of_streams).min(MAX_STREAMS);
+        let mut res = std::collections::HashMap::with_capacity(n);
         let mut stream_entry_rva = *streams_table_rva;
-        for _i in 0..*number_of_streams {
+        for _i in 0..n {
             let stream = self.new_clr_stream(&stream_entry_rva, metadata_rva)?;
-            stream_entry_rva += stream.stream_table_entry_size as u32;
+            stream_entry_rva = stream_entry_rva
+                .checked_add(stream.stream_table_entry_size as u32)
+                .ok_or(Error::UnresolvedRvaError(stream_entry_rva))?;
             res.insert(stream.name().to_string(), stream);
         }
-        let mut rres = std::collections::HashMap::new();
+        let mut rres = std::collections::HashMap::with_capacity(res.len());
         for (n, s) in &res {
             rres.insert(n.to_string(), self.parse_clr_stream(s, &res)?);
         }
@@ -288,9 +323,18 @@ impl<'a> DnPe<'a> {
         metadata_rva: &u32,
     ) -> Result<stream::ClrStream<'a>> {
         let stream_offset: u32 = self.get_data(stream_table_entry_rva, &4)?;
-        let stream_size: u32 = self.get_data(&(stream_table_entry_rva + 4), &4)?;
-        let stream_name = self.get_nullterminated_string(&(stream_table_entry_rva + 8))?;
-        let stream_data = self.get_slice(&(metadata_rva + stream_offset), stream_size as usize)?;
+        let size_rva = stream_table_entry_rva
+            .checked_add(4)
+            .ok_or(Error::UnresolvedRvaError(*stream_table_entry_rva))?;
+        let stream_size: u32 = self.get_data(&size_rva, &4)?;
+        let name_rva = stream_table_entry_rva
+            .checked_add(8)
+            .ok_or(Error::UnresolvedRvaError(*stream_table_entry_rva))?;
+        let stream_name = self.get_nullterminated_string(&name_rva)?;
+        let data_rva = metadata_rva
+            .checked_add(stream_offset)
+            .ok_or(Error::UnresolvedRvaError(*metadata_rva))?;
+        let stream_data = self.get_slice(&data_rva, stream_size as usize)?;
         self.nnew_clr_stream(
             metadata_rva,
             &stream_offset,
@@ -394,7 +438,12 @@ impl<'a> ClrData<'a> {
         T: stream::meta_data_tables::mdtables::MDTableRowTrait + 'static,
     {
         let table = self.md_table(index.table())?;
-        table.row(index.row_index() - 1)
+        // ECMA-335 row indices are 1-based; a 0 indicates "no reference".
+        let idx = index
+            .row_index()
+            .checked_sub(1)
+            .ok_or(Error::UndefinedMetaDataTableName(index.table()))?;
+        table.row(idx)
     }
 
     pub fn functions(&self) -> &Vec<lang::cil::function::Function> {

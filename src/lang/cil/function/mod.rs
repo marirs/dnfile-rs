@@ -86,11 +86,32 @@ impl Function {
     }
 
     pub fn parse_instructions(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
-        let mut current_offset = self.offset + self.header_size;
-        let code_end_offset = reader.tell()? + self.code_size;
+        let mut current_offset = self
+            .offset
+            .checked_add(self.header_size)
+            .ok_or(Error::MethodBodyFormatError(
+                "method offset+header_size overflow".to_string(),
+            ))?;
+        let code_end_offset = reader
+            .tell()?
+            .checked_add(self.code_size)
+            .ok_or(Error::MethodBodyFormatError(
+                "method code_size overflow".to_string(),
+            ))?;
         while reader.tell()? < code_end_offset {
             let insn = reader.read_instruction(current_offset)?;
-            current_offset += insn.size();
+            // Defensive: a zero-size instruction would loop forever. The
+            // current opcode table never produces one, but a future bug
+            // shouldn't be able to hang the parser.
+            let isize = insn.size();
+            if isize == 0 {
+                return Err(Error::MethodBodyFormatError(
+                    "zero-size instruction".to_string(),
+                ));
+            }
+            current_offset = current_offset.checked_add(isize).ok_or(
+                Error::MethodBodyFormatError("instruction offset overflow".to_string()),
+            )?;
             self.instructions.push(insn);
         }
         Ok(())
@@ -118,10 +139,21 @@ impl Function {
     }
 
     pub fn parse_fat_exception_handlers(&mut self, reader: &mut reader::Reader<'_>) -> Result<()> {
-        let pos = reader.tell()? - 1;
+        let pos = reader
+            .tell()?
+            .checked_sub(1)
+            .ok_or(Error::MethodBodyFormatError(
+                "fat EH header out of bounds".to_string(),
+            ))?;
         reader.seek(pos)?;
-        let total_size = reader.read_u32()? >> 8;
-        let num_exceptions = total_size; // ExceptionHandler.FAT_SIZE
+        let total_size = (reader.read_u32()? >> 8) as usize;
+        // Per ECMA-335 II.25.4.6: total_size is the byte length of the
+        // section including the 4-byte header; each fat clause is 24 bytes.
+        // Use saturating math + clamp against remaining buffer so a crafted
+        // `total_size` near 2^24 doesn't drive a ~640 MB Vec allocation.
+        let count_from_header = total_size.saturating_sub(4) / 24;
+        let remaining = reader.stream_remaining() / 24;
+        let num_exceptions = count_from_header.min(remaining);
         for _ in 0..num_exceptions {
             let mut eh = super::exception::ExceptionHandler::new(reader.read_u32()? as usize);
             eh.try_start = reader.read_i32()? as i64;

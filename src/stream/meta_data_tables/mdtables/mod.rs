@@ -81,6 +81,17 @@ where
         blobs_offset_size: usize,
         tables_row_counts: &[usize],
     ) -> Result<MDTable<T>> {
+        // Sanity cap on row allocations. ECMA-335 encodes row counts as
+        // u32, so a crafted binary can request up to ~4 G rows; each
+        // MDTableRow<T> is on the order of 100 bytes, which would pin the
+        // process for hundreds of GB. Bound by both an absolute hard cap
+        // (8 M rows is far above anything seen in the wild — real .NET
+        // binaries top out around 1 M MethodDef rows) and the per-row size.
+        const MAX_ROWS: usize = 8 * 1024 * 1024;
+        let n = *num_rows;
+        if n > MAX_ROWS {
+            return Err(Error::NotEnoughData(n, MAX_ROWS));
+        }
         Ok(MDTable::<T> {
             name: name.to_string(),
             table: vec![
@@ -90,7 +101,7 @@ where
                     blobs_offset_size,
                     tables_row_counts
                 );
-                *num_rows
+                n
             ],
         })
     }

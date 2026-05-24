@@ -23,15 +23,23 @@ impl<'a> BlobHeap<'a> {
         if index >= self.data.len() {
             return Err(Error::BlobHeapReadOutOfBound(index, self.data.len()));
         }
+        // Pass at most 4 bytes — `read_compressed_usize` now handles short input.
+        let header_end = index.saturating_add(4).min(self.data.len());
         let (data_length, length_size) =
-            crate::utils::read_compressed_usize(&self.data[index..index + 4])?;
-        if index + length_size + data_length > self.data.len() {
+            crate::utils::read_compressed_usize(&self.data[index..header_end])?;
+        let payload_start = index
+            .checked_add(length_size)
+            .ok_or(Error::BlobHeapReadOutOfBound(index, self.data.len()))?;
+        let payload_end = payload_start
+            .checked_add(data_length)
+            .ok_or(Error::BlobHeapReadOutOfBound(index, self.data.len()))?;
+        if payload_end > self.data.len() {
             return Err(Error::BlobHeapReadOutOfBound(
-                index + data_length + length_size,
+                payload_end,
                 self.data.len(),
             ));
         }
-        Ok(&self.data[index + length_size..index + length_size + data_length])
+        Ok(&self.data[payload_start..payload_end])
     }
 }
 

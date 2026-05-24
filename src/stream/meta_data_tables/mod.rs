@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{Result, error::Error};
 
 pub mod mdtables;
 
@@ -102,10 +102,22 @@ impl<'a> crate::DnPe<'a> {
         let mut ttables = std::collections::BTreeMap::new();
         for (n, table) in &tables {
             if table.row_size > 0 && table.num_rows > 0 {
-                let table_data = self.get_vec(&curr_rva, &(table.row_size * table.num_rows))?;
+                // `num_rows` is a u32 from the file; row_size is derived from
+                // schema. Multiply with checked math so a crafted row count
+                // can't wrap to a small value that bypasses `get_vec`'s bound
+                // check, and can't drive a >4 GiB allocation.
+                let bytes = table
+                    .row_size
+                    .checked_mul(table.num_rows)
+                    .ok_or(Error::NotEnoughData(table.row_size, table.num_rows))?;
+                let table_data = self.get_vec(&curr_rva, &bytes)?;
                 let mut ttable = self.parse_rows(table, &curr_rva, &table_data)?;
                 ttable.rva = curr_rva;
-                curr_rva += (table.row_size * table.num_rows) as u32;
+                let bytes_u32 = u32::try_from(bytes)
+                    .map_err(|_| Error::NotEnoughData(table.row_size, table.num_rows))?;
+                curr_rva = curr_rva
+                    .checked_add(bytes_u32)
+                    .ok_or(Error::UnresolvedRvaError(curr_rva))?;
                 ttables.insert(*n, ttable);
             } else {
                 ttables.insert(*n, table.clone());

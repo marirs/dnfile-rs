@@ -30,6 +30,15 @@ impl<'a> Reader<'a> {
         Ok(self.stream.seek(std::io::SeekFrom::Start(pos as u64))? as usize)
     }
 
+    /// Bytes still available in the underlying buffer from the current
+    /// cursor position. Used by callers that need to clamp attacker-supplied
+    /// counts against the remaining file.
+    pub fn stream_remaining(&mut self) -> usize {
+        let len = self.stream.get_ref().len();
+        let pos = self.tell().unwrap_or(len);
+        len.saturating_sub(pos)
+    }
+
     #[allow(clippy::unused_self)]
     pub fn is_arg_operand_instruction(&self, insn: &Instruction) -> bool {
         [
@@ -135,11 +144,48 @@ impl<'a> Reader<'a> {
 
     pub fn read_inline_switch(&mut self, insn: &Instruction) -> Result<Operand> {
         let num_branches = self.read_u32()? as usize;
-        let offset_after_insn = insn.offset + insn.opcode.size() + 4 + num_branches * 4;
-        let mut branches = vec![];
+        // Each branch is 4 bytes. Reject if the table can't possibly fit
+        // in the remainder of the file buffer — otherwise a crafted
+        // `num_branches == u32::MAX` would attempt a ~16 GB allocation.
+        let remaining = self
+            .stream
+            .get_ref()
+            .len()
+            .saturating_sub(self.tell()?);
+        let needed = num_branches
+            .checked_mul(4)
+            .ok_or(Error::MethodBodyFormatError(
+                "switch num_branches overflow".to_string(),
+            ))?;
+        if needed > remaining {
+            return Err(Error::MethodBodyFormatError(format!(
+                "switch table too large: {num_branches} branches > {} remaining bytes / 4",
+                remaining
+            )));
+        }
+        let table_size = insn
+            .opcode
+            .size()
+            .checked_add(4)
+            .and_then(|s| s.checked_add(needed))
+            .ok_or(Error::MethodBodyFormatError(
+                "switch table size overflow".to_string(),
+            ))?;
+        let offset_after_insn = insn
+            .offset
+            .checked_add(table_size)
+            .ok_or(Error::MethodBodyFormatError(
+                "switch offset_after_insn overflow".to_string(),
+            ))?;
+        let mut branches = Vec::with_capacity(num_branches);
         for _ in 0..num_branches {
             let branch_offset = self.read_u32()? as usize;
-            branches.push(Operand::Int((offset_after_insn + branch_offset) as i64));
+            let target = offset_after_insn
+                .checked_add(branch_offset)
+                .ok_or(Error::MethodBodyFormatError(
+                    "switch branch target overflow".to_string(),
+                ))?;
+            branches.push(Operand::Int(target as i64));
         }
         Ok(Operand::Arguments(branches))
     }

@@ -65,8 +65,13 @@ impl<'a> crate::DnPe<'a> {
             return Ok(vec![]);
         };
 
-        let mut out = Vec::with_capacity(table.row_count());
-        for i in 0..table.row_count() {
+        // Defensive cap on the pre-allocation: row_count derives from a
+        // file-supplied u32, so on a crafted input we'd otherwise request
+        // a multi-GB allocation. The actual loop still walks every row;
+        // the Vec just grows naturally past 4096.
+        let row_count = table.row_count();
+        let mut out = Vec::with_capacity(row_count.min(4096));
+        for i in 0..row_count {
             let row =
                 table.row::<crate::stream::meta_data_tables::mdtables::ManifestResource>(i)?;
 
@@ -133,7 +138,18 @@ impl<'a> crate::DnPe<'a> {
             .checked_add(manifest_offset)
             .ok_or(Error::UnresolvedRvaError(manifest_offset))?;
         let header: u32 = self.get_data(&abs, &4)?;
-        let length = header as usize;
-        self.get_slice(&(abs + 4), length)
+        // The 4-byte length prefix is attacker-controlled. Clamp it to the
+        // remaining bytes of the resources directory before passing it to
+        // `get_slice` (which also bounds-checks). This means a corrupted
+        // length doesn't blow up the parse — we just return the smaller
+        // valid slice.
+        let payload_rva = abs
+            .checked_add(4)
+            .ok_or(Error::UnresolvedRvaError(abs))?;
+        let max = self
+            .resources_size
+            .saturating_sub(manifest_offset.saturating_add(4));
+        let length = (header as usize).min(max as usize);
+        self.get_slice(&payload_rva, length)
     }
 }

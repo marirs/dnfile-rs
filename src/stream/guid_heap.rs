@@ -13,16 +13,24 @@ impl<'a> GuidHeap<'a> {
     }
 
     pub fn get(&self, index: usize) -> Result<uuid::Uuid> {
-        let size = 16;
+        const SIZE: usize = 16;
         if index < 1 {
             return Ok(uuid::Uuid::default());
         }
-        let offset = (index - 1) * size;
-        if offset + size > self.data.len() {
+        // ECMA-335 GUID heap indices are 1-based. All arithmetic is checked
+        // to avoid wraparound on attacker-supplied indices that would
+        // otherwise bypass the upper-bound check.
+        let offset = index
+            .checked_sub(1)
+            .and_then(|i| i.checked_mul(SIZE))
+            .ok_or(Error::GuidHeapReadOutOfBound(index, self.data.len()))?;
+        let end = offset
+            .checked_add(SIZE)
+            .ok_or(Error::GuidHeapReadOutOfBound(index, self.data.len()))?;
+        if end > self.data.len() {
             return Err(Error::GuidHeapReadOutOfBound(index, self.data.len()));
         }
-        let guid_buf = &self.data[offset..offset + size];
-        Ok(uuid::Uuid::from_slice(guid_buf)?)
+        Ok(uuid::Uuid::from_slice(&self.data[offset..end])?)
     }
 }
 

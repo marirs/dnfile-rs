@@ -76,6 +76,48 @@ with the caveat that 0.x minor versions can break.
   [u8]`); listing 1000s of resources from a fat assembly is essentially
   free.
 
+### Security & robustness
+
+Hardened against crafted-input panics, infinite loops, and oversized
+allocations. dnfile-rs is intended to parse adversary-supplied malware;
+the parser must not crash, hang, or eat the heap.
+
+- **`utils::read_compressed_usize`** now bounds-checks every byte access;
+  previously panicked on short inputs (reachable from blob / signature
+  paths).
+- **`DnPe::get_slice`** uses `checked_add` for `offset + size` so a
+  wraparound can't bypass the upper bound and read at the wrong location.
+- **`DnPe::get_nullterminated_string`** is bounds-checked, uses
+  `checked_add` on the RVA, and caps the string at 1 KiB (real names are
+  ≤ 31 chars).
+- **`DnPe::new_metadata`, `new_streams`, `new_clr_stream`** — every
+  intermediate RVA addition is `checked_add`; `number_of_streams` is
+  capped at 64.
+- **`BlobHeap::get_ref`, `UserStringHeap::get`, `GuidHeap::get`** — all
+  index / length math uses `checked_add` / `checked_mul` / `checked_sub`;
+  a crafted index can no longer wrap to a bypassing offset.
+- **`MDTable::new`** — refuses to allocate more than 8 M rows per metadata
+  table (a soft cap well above anything real; before this a crafted u32
+  row count could request hundreds of GB).
+- **`meta_data_tables::parse_meta_data_tables`** — `row_size * num_rows`
+  via `checked_mul`, `curr_rva += ...` via `checked_add`.
+- **`Reader::read_inline_switch`** — caps `num_branches` against
+  remaining buffer bytes; previously a `0xFFFF_FFFF` switch count would
+  attempt a ~16 GiB allocation.
+- **`Function::parse_instructions`** — rejects zero-size instructions
+  (would loop forever) and uses `checked_add` on offsets.
+- **`Function::parse_fat_exception_handlers`** — clause count is computed
+  per ECMA-335 II.25.4.6 as `(total_size - 4) / 24` and clamped against
+  remaining bytes (was driving multi-MB Vec allocations on crafted
+  `total_size`).
+- **`DnPe::read_embedded_resource`** — clamps the length-prefix against
+  the resources-directory size.
+- **`ClrData::resolve_coded_index`** — uses `checked_sub` on the 1-based
+  row index; a row-index-of-zero now returns an error instead of panicking
+  in debug.
+- **`resource::DotNetResource::with_capacity`** — pre-allocation is
+  bounded so a crafted ManifestResource row count can't OOM the process.
+
 ## [0.4.0] — 2026-05
 
 ### Changed (breaking)
