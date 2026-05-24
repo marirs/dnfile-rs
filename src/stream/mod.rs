@@ -8,25 +8,25 @@ pub mod string_heap;
 pub mod user_string_heap;
 
 #[derive(Debug, Clone, serde::Serialize)]
-pub enum Stream {
+pub enum Stream<'a> {
     GenericStream(generic_stream::GenericStream),
     MetaDataTables(meta_data_tables::MetaDataTable),
-    StringHeap(string_heap::StringHeap),
-    BlobHeap(blob_heap::BlobHeap),
-    GuidHeap(guid_heap::GuidHeap),
-    UserStringHeap(user_string_heap::UserStringHeap),
+    StringHeap(string_heap::StringHeap<'a>),
+    BlobHeap(blob_heap::BlobHeap<'a>),
+    GuidHeap(guid_heap::GuidHeap<'a>),
+    UserStringHeap(user_string_heap::UserStringHeap<'a>),
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct ClrStream {
+pub struct ClrStream<'a> {
     pub name: String,
     pub rva: u32,
     pub size: usize,
     pub stream_table_entry_size: usize,
-    pub stream: Stream,
+    pub stream: Stream<'a>,
 }
 
-impl ClrStream {
+impl<'a> ClrStream<'a> {
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -59,15 +59,15 @@ impl ClrStream {
     }
 }
 
-impl crate::DnPe {
+impl<'a> crate::DnPe<'a> {
     pub fn nnew_clr_stream(
         &self,
         metadata_rva: &u32,
         stream_offset: &u32,
         stream_size: &usize,
         stream_name: &str,
-        stream_data: Vec<u8>,
-    ) -> Result<ClrStream> {
+        stream_data: &'a [u8],
+    ) -> Result<ClrStream<'a>> {
         Ok(ClrStream {
             name: stream_name.to_string(),
             rva: metadata_rva + stream_offset,
@@ -123,9 +123,9 @@ impl crate::DnPe {
 
     pub fn parse_clr_stream(
         &self,
-        stream: &ClrStream,
-        stream_map: &std::collections::HashMap<String, ClrStream>,
-    ) -> Result<ClrStream> {
+        stream: &ClrStream<'a>,
+        stream_map: &std::collections::HashMap<String, ClrStream<'a>>,
+    ) -> Result<ClrStream<'a>> {
         let mut res = stream.clone();
         if let Stream::MetaDataTables(m) = &mut res.stream {
             m.tables = self.parse_meta_data_tables(m, stream_map)?;

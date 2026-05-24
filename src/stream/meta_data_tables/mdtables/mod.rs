@@ -169,9 +169,9 @@ pub trait MDTableRowTrait {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()>;
     fn parse2(
         &mut self,
@@ -182,9 +182,9 @@ pub trait MDTableRowTrait {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         Ok(())
     }
@@ -197,17 +197,17 @@ pub trait MDTableRowTraitT {
         &mut self,
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTraitT>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()>;
     fn parse2(
         &mut self,
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTraitT>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()>;
     fn get_row(&self) -> &dyn MDTableRowTrait;
     fn get_mut_row(&mut self) -> &mut dyn MDTableRowTrait;
@@ -242,9 +242,9 @@ where
         &mut self,
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTraitT>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let nn = next_row.map(|n| n.get_row());
         self.row.parse(
@@ -265,9 +265,9 @@ where
         &mut self,
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTraitT>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobss_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let nn = next_row.map(|n| n.get_row());
         self.row.parse2(
@@ -351,9 +351,9 @@ impl MDTableRowTrait for Module {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobs_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = str_offset_size;
@@ -414,9 +414,9 @@ impl MDTableRowTrait for TypeRef {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let first_size = codedindex::clr_coded_index_struct_size(
             self.resolution_scope.tag_bits,
@@ -478,9 +478,9 @@ impl MDTableRowTrait for TypeDef {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + str_offset_size;
@@ -527,9 +527,9 @@ impl MDTableRowTrait for TypeDef {
         _tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let field_row_count = tables
             .get(&table_name_2_index("Field")?)
@@ -621,9 +621,9 @@ impl MDTableRowTrait for FieldPtr {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
         self.field = codedindex::SimpleCodedIndex::new(vec!["Field"], 0, &data[0..s1], tables)?;
@@ -662,9 +662,9 @@ impl MDTableRowTrait for Field {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + str_offset_size;
@@ -715,9 +715,9 @@ impl MDTableRowTrait for MethodPtr {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["MethodDef"], tables_row_counts);
         self.field = codedindex::SimpleCodedIndex::new(vec!["MethodDef"], 0, &data[0..s1], tables)?;
@@ -763,9 +763,9 @@ impl MDTableRowTrait for MethodDef {
         tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 2;
@@ -823,9 +823,9 @@ impl MDTableRowTrait for ParamPtr {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["Param"], tables_row_counts);
         self.field = codedindex::SimpleCodedIndex::new(vec!["Param"], 0, &data[0..s1], tables)?;
@@ -864,9 +864,9 @@ impl MDTableRowTrait for Param {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + 2;
@@ -918,9 +918,9 @@ impl MDTableRowTrait for InterfaceImpl {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
         let s2 = s1
@@ -971,9 +971,9 @@ impl MDTableRowTrait for MemberRef {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(
             self.class.tag_bits,
@@ -1037,9 +1037,9 @@ impl MDTableRowTrait for Constant {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 1;
         let s2 = s1 + 1;
@@ -1102,9 +1102,9 @@ impl MDTableRowTrait for CustomAttribute {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let first = codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1163,9 +1163,9 @@ impl MDTableRowTrait for FieldMarshal {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(
             self.parent.tag_bits,
@@ -1219,9 +1219,9 @@ impl MDTableRowTrait for DeclSecurity {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1
@@ -1274,9 +1274,9 @@ impl MDTableRowTrait for ClassLayout {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = 4;
@@ -1319,9 +1319,9 @@ impl MDTableRowTrait for FieldLayout {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
@@ -1360,9 +1360,9 @@ impl MDTableRowTrait for StandAloneSig {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = blobs_offset_size;
         let blobs_heap = if let Some(s) = blobs_heap {
@@ -1406,9 +1406,9 @@ impl MDTableRowTrait for EventMap {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
         let _s2 =
@@ -1446,9 +1446,9 @@ impl MDTableRowTrait for EventPtr {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         Err(Error::NotImplementedError)
     }
@@ -1490,9 +1490,9 @@ impl MDTableRowTrait for Event {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + str_offset_size;
@@ -1545,9 +1545,9 @@ impl MDTableRowTrait for PropertyMap {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
         let _s2 =
@@ -1585,9 +1585,9 @@ impl MDTableRowTrait for PropertyPtr {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         Err(Error::NotImplementedError)
     }
@@ -1624,9 +1624,9 @@ impl MDTableRowTrait for Property {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + str_offset_size;
@@ -1684,9 +1684,9 @@ impl MDTableRowTrait for MethodSemantics {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 =
@@ -1747,9 +1747,9 @@ impl MDTableRowTrait for MethodImpl {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
         let s2 = s1
@@ -1800,9 +1800,9 @@ impl MDTableRowTrait for ModuleRef {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = str_offset_size;
         let strings_heap = if let Some(s) = strings_heap {
@@ -1844,9 +1844,9 @@ impl MDTableRowTrait for TypeSpec {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = blobs_offset_size;
         let blobs_heap = if let Some(s) = blobs_heap {
@@ -1896,9 +1896,9 @@ impl MDTableRowTrait for ImplMap {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1
@@ -1954,9 +1954,9 @@ impl MDTableRowTrait for FieldRva {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + codedindex::clr_coded_index_struct_size(0, &vec!["Field"], tables_row_counts);
@@ -1996,9 +1996,9 @@ impl MDTableRowTrait for EncLog {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 4;
@@ -2036,9 +2036,9 @@ impl MDTableRowTrait for EncMap {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         self.token = crate::utils::read_usize(&data[0..s1])? as u32;
@@ -2083,9 +2083,9 @@ impl MDTableRowTrait for Assembly {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 2;
@@ -2149,9 +2149,9 @@ impl MDTableRowTrait for AssemblyProcessor {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         self.processor = crate::utils::read_usize(&data[0..s1])? as u32;
@@ -2189,9 +2189,9 @@ impl MDTableRowTrait for AssemblyOS {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 4;
@@ -2247,9 +2247,9 @@ impl MDTableRowTrait for AssemblyRef {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + 2;
@@ -2313,9 +2313,9 @@ impl MDTableRowTrait for AssemblyRefProcessor {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1
@@ -2361,9 +2361,9 @@ impl MDTableRowTrait for AssemblyRefOS {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 4;
@@ -2410,9 +2410,9 @@ impl MDTableRowTrait for File {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + str_offset_size;
@@ -2474,9 +2474,9 @@ impl MDTableRowTrait for ExportedType {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 4;
@@ -2540,9 +2540,9 @@ impl MDTableRowTrait for ManifestResource {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 4;
         let s2 = s1 + 4;
@@ -2597,9 +2597,9 @@ impl MDTableRowTrait for NestedClass {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(0, &vec!["TypeDef"], tables_row_counts);
         let s2 =
@@ -2650,9 +2650,9 @@ impl MDTableRowTrait for GenericParam {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = 2;
         let s2 = s1 + 2;
@@ -2710,9 +2710,9 @@ impl MDTableRowTrait for GenericMethod {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 = codedindex::clr_coded_index_struct_size(
             self.unknown1.tag_bits,
@@ -2766,9 +2766,9 @@ impl MDTableRowTrait for GenericParamConstraint {
         tables_row_counts: &[usize],
         tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         let s1 =
             codedindex::clr_coded_index_struct_size(0, &vec!["GenericParam"], tables_row_counts);
@@ -2812,9 +2812,9 @@ impl MDTableRowTrait for Unused {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         Err(Error::NotImplementedError)
     }
@@ -2847,9 +2847,9 @@ impl MDTableRowTrait for MaxTable {
         _tables_row_counts: &[usize],
         _tables: &std::collections::BTreeMap<usize, MetaDataTable>,
         _next_row: Option<&dyn MDTableRowTrait>,
-        _strings_heap: &Option<&crate::stream::ClrStream>,
-        _blobss_heap: &Option<&crate::stream::ClrStream>,
-        _guids_heap: &Option<&crate::stream::ClrStream>,
+        _strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _blobss_heap: &Option<&crate::stream::ClrStream<'_>>,
+        _guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<()> {
         Err(Error::NotImplementedError)
     }
@@ -2893,7 +2893,7 @@ impl MetaDataTable {
     }
 }
 
-impl crate::DnPe {
+impl<'a> crate::DnPe<'a> {
     pub fn create_md_table(
         &self,
         i: &usize,
@@ -3351,9 +3351,9 @@ impl crate::DnPe {
         &self,
         table: &MetaDataTable,
         ttables: &std::collections::BTreeMap<usize, MetaDataTable>,
-        strings_heap: &Option<&crate::stream::ClrStream>,
-        blobs_heap: &Option<&crate::stream::ClrStream>,
-        guids_heap: &Option<&crate::stream::ClrStream>,
+        strings_heap: &Option<&crate::stream::ClrStream<'_>>,
+        blobs_heap: &Option<&crate::stream::ClrStream<'_>>,
+        guids_heap: &Option<&crate::stream::ClrStream<'_>>,
     ) -> Result<MetaDataTable> {
         let mut ttable = table.clone();
         for i in 0..ttable.row_count() {

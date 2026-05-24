@@ -3,7 +3,7 @@ use crate::Result;
 #[derive(Debug, Default, Clone, serde::Serialize)]
 pub struct GenericStream {}
 
-impl crate::DnPe {
+impl<'a> crate::DnPe<'a> {
     #[allow(clippy::trivially_copy_pass_by_ref)]
     pub fn new_generic_stream(
         &self,
@@ -11,8 +11,8 @@ impl crate::DnPe {
         _stream_offset: &u32,
         _stream_size: &usize,
         _stream_name: &str,
-        _stream_data: Vec<u8>,
-    ) -> Result<super::Stream> {
+        _stream_data: &'a [u8],
+    ) -> Result<super::Stream<'a>> {
         Ok(super::Stream::GenericStream(GenericStream::default()))
     }
 }

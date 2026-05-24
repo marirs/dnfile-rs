@@ -18,15 +18,15 @@ pub struct MetaDataTable {
     pub tables: std::collections::BTreeMap<usize, mdtables::MetaDataTable>,
 }
 
-impl crate::DnPe {
+impl<'a> crate::DnPe<'a> {
     pub fn new_meta_data_table(
         &self,
         metadata_rva: &u32,
         stream_offset: &u32,
         _stream_size: &usize,
         _stream_name: &str,
-        _stream_data: Vec<u8>,
-    ) -> Result<super::Stream> {
+        _stream_data: &'a [u8],
+    ) -> Result<super::Stream<'a>> {
         Ok(super::Stream::MetaDataTables(MetaDataTable {
             //data: stream_data,
             rva: metadata_rva + stream_offset,
@@ -37,7 +37,7 @@ impl crate::DnPe {
     pub fn parse_meta_data_tables(
         &self,
         s: &mut MetaDataTable,
-        stream_map: &std::collections::HashMap<String, super::ClrStream>,
+        stream_map: &std::collections::HashMap<String, super::ClrStream<'a>>,
     ) -> Result<std::collections::BTreeMap<usize, mdtables::MetaDataTable>> {
         let mut tables = std::collections::BTreeMap::new();
         let header_len = std::mem::size_of::<MDTablesStruct>();

@@ -3,7 +3,8 @@ pub fn main() -> dnfile::Result<()> {
         eprintln!("usage: dnfile <path-to-.NET-PE>");
         std::process::exit(2);
     };
-    let df = dnfile::DnPe::new(arg.as_str())?;
+    let data = std::fs::read(&arg)?;
+    let df = dnfile::DnPe::parse(&data)?;
     println!("{df:#02x?}");
     Ok(())
 }

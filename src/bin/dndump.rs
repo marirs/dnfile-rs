@@ -42,6 +42,12 @@ fn main() -> ExitCode {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
             eprintln!("error: {e}");
+            // Walk the source chain so wrapper errors don't hide the real cause.
+            let mut src = e.source();
+            while let Some(cause) = src {
+                eprintln!("caused by: {cause}");
+                src = cause.source();
+            }
             ExitCode::from(1)
         }
     }
@@ -51,7 +57,8 @@ fn run(args: Args) -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
 
     let path = args.file.canonicalize().unwrap_or(args.file.clone());
-    let pe = DnPe::new(path.to_str().ok_or("file path is not valid UTF-8")?)?;
+    let data = std::fs::read(&path)?;
+    let pe = DnPe::parse(&data)?;
 
     if args.json {
         let s = serde_json::to_string_pretty(&pe)?;

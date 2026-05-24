@@ -20,11 +20,25 @@ use crate::{
 
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// A parsed .NET PE file.
+///
+/// `DnPe` borrows the underlying file buffer (`&'a [u8]`) and exposes the
+/// CLR header, metadata streams, tables and CIL method bodies. The caller
+/// owns the buffer; back it with `std::fs::read` or `memmap2::Mmap`.
+///
+/// # Example
+///
+/// ```no_run
+/// let data = std::fs::read("Sample.exe")?;
+/// let pe = dnfile::DnPe::parse(&data)?;
+/// let clr = pe.net()?;
+/// println!("{} functions", clr.functions().len());
+/// # Ok::<(), dnfile::error::Error>(())
+/// ```
 #[derive(Debug, Serialize)]
-pub struct DnPe {
-    name: String,
+pub struct DnPe<'a> {
     #[serde(skip_serializing)]
-    data: Vec<u8>,
+    data: &'a [u8],
     /// PE section table cached at construction.
     /// Avoids re-parsing the whole PE on every `offset()` / `get_data()` call,
     /// which is in the hot path of every metadata-table row and every CIL instruction.
@@ -33,11 +47,11 @@ pub struct DnPe {
     /// PE optional-header `file_alignment` cached at construction (same reason).
     #[serde(skip_serializing)]
     file_alignment: u32,
-    net: Option<ClrData>,
+    net: Option<ClrData<'a>>,
 }
 
-impl DnPe {
-    pub fn net(&self) -> Result<&ClrData> {
+impl<'a> DnPe<'a> {
+    pub fn net(&self) -> Result<&ClrData<'a>> {
         self.net.as_ref().ok_or(Error::NotImplementedError)
     }
 
@@ -49,20 +63,22 @@ impl DnPe {
     /// linear in file size, so cache the result yourself if you need it
     /// repeatedly.
     pub fn pe(&self) -> Result<goblin::pe::PE<'_>> {
-        match goblin::Object::parse(&self.data)? {
+        match goblin::Object::parse(self.data)? {
             goblin::Object::PE(pe) => Ok(pe),
             _ => Err(Error::UnsupportedBinaryFormat("main")),
         }
     }
 
-    pub fn new(name: &str) -> Result<DnPe> {
-        let data = std::fs::read(name)?;
-
+    /// Parse a .NET PE from a borrowed byte buffer.
+    ///
+    /// Zero-copy: heaps, streams and method-body readers all hold slices
+    /// into `data` rather than copies.
+    pub fn parse(data: &'a [u8]) -> Result<Self> {
         // Parse the PE exactly once and extract the bits we'll need on the
         // hot path. Previously every `offset()` / `get_data()` call re-parsed
         // the entire binary via `self.pe()`.
         let (sections, file_alignment, clr_directory) = {
-            let pe = match goblin::Object::parse(&data)? {
+            let pe = match goblin::Object::parse(data)? {
                 goblin::Object::PE(pe) => pe,
                 _ => return Err(Error::UnsupportedBinaryFormat("main")),
             };
@@ -80,7 +96,6 @@ impl DnPe {
         };
 
         let mut res = DnPe {
-            name: name.to_string(),
             data,
             sections,
             file_alignment,
@@ -104,12 +119,12 @@ impl DnPe {
         .ok_or(Error::UnresolvedRvaError(rva))
     }
 
-    fn get_data<'a, T>(&'a self, rva: &'a u32, size: &'a usize) -> Result<T>
+    fn get_data<'b, T>(&'b self, rva: &'b u32, size: &'b usize) -> Result<T>
     where
-        T: scroll::ctx::TryFromCtx<'a, goblin::container::Endian, Error = scroll::Error>,
+        T: scroll::ctx::TryFromCtx<'b, goblin::container::Endian, Error = scroll::Error>,
     {
         Ok(goblin::pe::utils::get_data(
-            &self.data,
+            self.data,
             &self.sections,
             goblin::pe::data_directories::DataDirectory {
                 virtual_address: *rva,
@@ -131,16 +146,25 @@ impl DnPe {
         Ok(String::from_utf8(res_buf)?)
     }
 
-    fn get_vec(&self, rva: &u32, size: &usize) -> Result<Vec<u8>> {
+    /// Borrowed slice into the file buffer. Replaces the prior `Vec<u8>`-returning
+    /// helper to keep stream/heap construction zero-copy.
+    fn get_slice(&self, rva: &u32, size: usize) -> Result<&'a [u8]> {
         let offset = self.offset(*rva)?;
-        Ok(self.data[offset..offset + size].to_vec())
+        self.data
+            .get(offset..offset + size)
+            .ok_or(Error::UnresolvedRvaError(*rva))
+    }
+
+    /// Owned variant kept for callers (mdtables) that intentionally take ownership.
+    fn get_vec(&self, rva: &u32, size: &usize) -> Result<Vec<u8>> {
+        Ok(self.get_slice(rva, *size)?.to_vec())
     }
 
     fn get_dword_at_rva(&self, rva: &u32) -> Result<u32> {
         self.get_data(rva, &4)
     }
 
-    fn new_clrdata(&self, clr_struct: ClrStruct) -> Result<ClrData> {
+    fn new_clrdata(&self, clr_struct: ClrStruct) -> Result<ClrData<'a>> {
         let metadata_struct: MetaDataStruct = self.get_data(
             &clr_struct.meta_data_rva,
             &(clr_struct.meta_data_size as usize),
@@ -149,14 +173,16 @@ impl DnPe {
         let flags = ClrHeaderFlags::new(clr_struct.flags as usize);
         let functions = self.parse_functions(&metadata)?;
         Ok(ClrData {
-            //clr_struct,
             metadata,
             flags,
             functions,
         })
     }
 
-    fn parse_functions(&self, metadata: &MetaData) -> Result<Vec<lang::cil::function::Function>> {
+    fn parse_functions(
+        &self,
+        metadata: &MetaData<'a>,
+    ) -> Result<Vec<lang::cil::function::Function>> {
         let mut res = vec![];
         let method_def_table = metadata.md_table("MethodDef")?;
         for i in 0..method_def_table.row_count() {
@@ -177,8 +203,9 @@ impl DnPe {
         }
         Ok(res)
     }
+
     fn parse_function(&self, row: &MethodDef) -> Result<lang::cil::function::Function> {
-        let mut reader = lang::cil::function::reader::Reader::new(&self.data);
+        let mut reader = lang::cil::function::reader::Reader::new(self.data);
         reader.seek(self.offset(row.rva)?)?;
         lang::cil::function::Function::new(&mut reader)
     }
@@ -187,7 +214,7 @@ impl DnPe {
         &self,
         metadata_rva: &u32,
         metadata_struct: MetaDataStruct,
-    ) -> Result<MetaData> {
+    ) -> Result<MetaData<'a>> {
         let version_offset = self.offset(metadata_rva + 16)?;
         let version = self.data
             [version_offset..version_offset + metadata_struct.version_length as usize]
@@ -199,15 +226,16 @@ impl DnPe {
             &2,
         )?;
         let struct_size = 16 + metadata_struct.version_length + 2 + 2;
-        let mut streams = std::collections::HashMap::new();
-        if number_of_streams > 0 {
+        let streams = if number_of_streams > 0 {
             let streams_table_rva = metadata_rva + struct_size;
-            streams = self.new_streams(
+            self.new_streams(
                 metadata_rva,
                 &streams_table_rva,
                 &(number_of_streams as usize),
-            )?;
-        }
+            )?
+        } else {
+            std::collections::HashMap::new()
+        };
         Ok(MetaData {
             _version: String::from_utf8(version)?,
             flags,
@@ -220,12 +248,12 @@ impl DnPe {
         metadata_rva: &u32,
         streams_table_rva: &u32,
         number_of_streams: &usize,
-    ) -> Result<std::collections::HashMap<String, stream::ClrStream>> {
+    ) -> Result<std::collections::HashMap<String, stream::ClrStream<'a>>> {
         let mut res = std::collections::HashMap::new();
         let mut stream_entry_rva = *streams_table_rva;
         for _i in 0..*number_of_streams {
             let stream = self.new_clr_stream(&stream_entry_rva, metadata_rva)?;
-            stream_entry_rva += &(stream.stream_table_entry_size as u32);
+            stream_entry_rva += stream.stream_table_entry_size as u32;
             res.insert(stream.name().to_string(), stream);
         }
         let mut rres = std::collections::HashMap::new();
@@ -239,11 +267,11 @@ impl DnPe {
         &self,
         stream_table_entry_rva: &u32,
         metadata_rva: &u32,
-    ) -> Result<stream::ClrStream> {
+    ) -> Result<stream::ClrStream<'a>> {
         let stream_offset: u32 = self.get_data(stream_table_entry_rva, &4)?;
         let stream_size: u32 = self.get_data(&(stream_table_entry_rva + 4), &4)?;
         let stream_name = self.get_nullterminated_string(&(stream_table_entry_rva + 8))?;
-        let stream_data = self.get_vec(&(metadata_rva + stream_offset), &(stream_size as usize))?;
+        let stream_data = self.get_slice(&(metadata_rva + stream_offset), stream_size as usize)?;
         self.nnew_clr_stream(
             metadata_rva,
             &stream_offset,
@@ -318,20 +346,13 @@ impl ClrHeaderFlags {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ClrData {
-    #[serde(skip_serializing)]
-    //    clr_struct: ClrStruct,
-    pub metadata: MetaData,
-    //    strings: Option<StringsHeap>,
-    //    user_strings: Option<UserStringHeap>,
-    //    guids: Option<GuidHeap>,
-    //   blobs: Option<BlobHeap>,
-    //    mdtables: Option<MetaDataTables>,
+pub struct ClrData<'a> {
+    pub metadata: MetaData<'a>,
     pub flags: std::collections::BTreeSet<ClrHeaderFlags>,
     pub functions: Vec<lang::cil::function::Function>,
 }
 
-impl ClrData {
+impl<'a> ClrData<'a> {
     pub fn md_table(
         &self,
         name: &'static str,
@@ -374,20 +395,17 @@ pub struct MetaDataStruct {
     minor_version: u16,
     reserved: u32,
     version_length: u32,
-    //    version: u32,
-    //    flags: u32,
-    //    number_of_streams: u32
 }
 
 #[derive(Debug, Serialize)]
-pub struct MetaData {
+pub struct MetaData<'a> {
     #[serde(skip_serializing)]
     _version: String,
     flags: u16,
-    pub streams: std::collections::HashMap<String, stream::ClrStream>,
+    pub streams: std::collections::HashMap<String, stream::ClrStream<'a>>,
 }
 
-impl MetaData {
+impl<'a> MetaData<'a> {
     pub fn md_table(
         &self,
         name: &'static str,

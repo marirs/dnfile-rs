@@ -1,12 +1,12 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("{0}")]
+    #[error("regex error: {0}")]
     RegexError(#[from] regex::Error),
-    #[error("goblin error")]
+    #[error("PE parse error: {0}")]
     ParseError(#[from] goblin::error::Error),
     #[error("unsupported binary format: {0}")]
     UnsupportedBinaryFormat(&'static str),
-    #[error("{0}")]
+    #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
     #[error("{0}")]
     UnresolvedRvaError(u32),

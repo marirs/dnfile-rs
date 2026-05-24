@@ -1,12 +1,17 @@
 use crate::{Result, error::Error};
 
 #[derive(Debug, Clone, serde::Serialize)]
-pub struct GuidHeap {
+pub struct GuidHeap<'a> {
     #[serde(skip_serializing)]
-    data: Vec<u8>,
+    data: &'a [u8],
 }
 
-impl GuidHeap {
+impl<'a> GuidHeap<'a> {
+    #[must_use]
+    pub fn new(data: &'a [u8]) -> Self {
+        Self { data }
+    }
+
     pub fn get(&self, index: usize) -> Result<uuid::Uuid> {
         let size = 16;
         if index < 1 {
@@ -21,15 +26,15 @@ impl GuidHeap {
     }
 }
 
-impl crate::DnPe {
+impl<'a> crate::DnPe<'a> {
     pub fn new_guid_heap(
         &self,
         _metadata_rva: &u32,
         _stream_offset: &u32,
         _stream_size: &usize,
         _stream_name: &str,
-        stream_data: Vec<u8>,
-    ) -> Result<super::Stream> {
-        Ok(super::Stream::GuidHeap(GuidHeap { data: stream_data }))
+        stream_data: &'a [u8],
+    ) -> Result<super::Stream<'a>> {
+        Ok(super::Stream::GuidHeap(GuidHeap::new(stream_data)))
     }
 }

@@ -27,7 +27,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-dnfile = "0.3"
+dnfile = "0.4"
 ```
 
 Then:
@@ -36,7 +36,9 @@ Then:
 use dnfile::DnPe;
 
 fn main() -> dnfile::Result<()> {
-    let pe = DnPe::new("MyAssembly.dll")?;
+    // dnfile is zero-copy: the caller owns the buffer, the parser borrows it.
+    let data = std::fs::read("MyAssembly.dll")?;
+    let pe = DnPe::parse(&data)?;
     let clr = pe.net()?;
 
     // CLR header flags
@@ -58,6 +60,15 @@ fn main() -> dnfile::Result<()> {
 
     Ok(())
 }
+```
+
+For very large binaries, back the buffer with `memmap2::Mmap` instead of `std::fs::read`:
+
+```rust,no_run
+let file = std::fs::File::open("Sample.exe")?;
+let mmap = unsafe { memmap2::Mmap::map(&file)? };
+let pe = dnfile::DnPe::parse(&mmap)?;
+# Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
 ## Command-line tool: `dndump`

@@ -2,7 +2,7 @@
 // see neighbouring `mdtables/mod.rs` for the rationale.
 #![allow(clippy::ptr_arg)]
 
-use crate::{Result, error::Error};
+use crate::Result;
 
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,
@@ -32,19 +32,27 @@ pub trait CodedIndex {
     fn set(
         &mut self,
         value: &[u8],
-        tables: &std::collections::BTreeMap<usize, super::MetaDataTable>,
+        _tables: &std::collections::BTreeMap<usize, super::MetaDataTable>,
     ) -> Result<()> {
         let value = crate::utils::read_usize(value)?;
         let table_name = self.get_table_name(value & ((1 << self.get_tag_bits()) - 1))?;
         self.set_row_index(value >> self.get_tag_bits());
-        for t in tables.values() {
-            if t.table.name() != table_name {
-                continue;
-            }
-            self.set_table(table_name);
-            return Ok(());
-        }
-        Err(Error::CodedIndexWithUndefinedTable(table_name.to_string()))
+        self.set_table(table_name);
+        // We deliberately do NOT validate that `table_name` is populated:
+        //
+        //   1. A row_index of 0 is a valid "null reference" in ECMA-335
+        //      (II.22). Forcing the target table to exist breaks every
+        //      coded-index slot that's intentionally null.
+        //
+        //   2. Many real .NET binaries (especially obfuscated malware) leave
+        //      optional tables like `File`, `ExportedType`, `ManifestResource`
+        //      unpopulated while still encoding coded-index slots that would
+        //      point at them.
+        //
+        // Consumers that need to materialize the target call
+        // `ClrData::resolve_coded_index`, which returns a clean `Err`
+        // (`UndefinedMetaDataTableName`) when the row is genuinely missing.
+        Ok(())
     }
 }
 

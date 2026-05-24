@@ -1,0 +1,109 @@
+# Changelog
+
+All notable changes to this project are documented in this file.
+
+The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
+with the caveat that 0.x minor versions can break.
+
+## [0.4.0] — 2026-05
+
+### Changed (breaking)
+
+- **`DnPe` is now zero-copy.** The struct gains a lifetime parameter
+  (`DnPe<'a>`) and borrows the underlying file buffer rather than copying
+  it. The caller now owns the bytes.
+- **`DnPe::new(path: &str)` removed; replaced with `DnPe::parse(data: &'a [u8])`.**
+  Two-line migration:
+
+  ```rust
+  // before (0.3)
+  let pe = dnfile::DnPe::new("Sample.exe")?;
+
+  // after (0.4)
+  let data = std::fs::read("Sample.exe")?;
+  let pe = dnfile::DnPe::parse(&data)?;
+  ```
+
+  Or, for large binaries, back the buffer with `memmap2::Mmap`:
+
+  ```rust
+  let file = std::fs::File::open("Sample.exe")?;
+  let mmap = unsafe { memmap2::Mmap::map(&file)? };
+  let pe = dnfile::DnPe::parse(&mmap)?;
+  ```
+- **Heap types now hold borrowed slices.** `StringHeap<'a>`, `BlobHeap<'a>`,
+  `UserStringHeap<'a>`, `GuidHeap<'a>` no longer own `Vec<u8>`; they hold
+  `&'a [u8]` into the parent file buffer.
+- **`Stream`, `ClrStream`, `ClrData`, `MetaData` are now generic over `'a`.**
+- The `name: String` field on `DnPe` is removed (the parser no longer owns
+  the path — that's the caller's concern). Serialized JSON shape changes
+  accordingly: top-level keys are reduced.
+
+### Added
+
+- **`StringHeap::get_cow(idx) -> Cow<'a, str>`** and **`get_bytes(idx) -> &'a [u8]`**
+  — zero-allocation accessors alongside the existing owned `get()` method.
+- **`BlobHeap::get_ref(idx) -> &'a [u8]`** — borrowed slice into the blob.
+- **`UserStringHeap::get_ref(idx) -> &'a [u8]`** — borrowed UTF-16 bytes.
+- **`#[must_use]`** on the public constructors of `StringHeap`, `BlobHeap`,
+  `UserStringHeap`, `GuidHeap`, plus `Argument`, `Local`, `Token`,
+  `ExceptionHandler`.
+
+### Removed
+
+- Dead `raw_bytes: Vec<u8>` field on `Function` (was initialized to
+  `vec![]` and never written).
+
+### Performance
+
+- File buffer is no longer cloned at construction (previously read via
+  `std::fs::read`, owned by `DnPe`). For a 10 MB .NET binary this saves
+  10 MB of heap pressure.
+- Heap streams (#Strings, #US, #Blob, #GUID) are no longer copied out of
+  the file buffer — they're slices into the caller's bytes.
+- Combined with the 0.3.0 wins (cached PE parse, borrowed CIL `Reader`,
+  static `OPCODES`), parsing throughput on a representative .NET DLL is
+  significantly higher than 0.2.x.
+
+## [0.3.0] — 2026-05
+
+### Changed (breaking)
+
+- Bumped to Rust 2024 edition; MSRV set to **1.85**.
+- Bumped `thiserror` 1 → 2.
+
+### Added
+
+- New `dndump` binary (capa-style CLI inspector) gated behind a `cli`
+  feature. Install via `cargo install dnfile --features cli`.
+- Unit tests for `utils`, `Token`, `ClrHeaderFlags`, the CIL `Reader`, and
+  the `OPCODES` singleton (24 tests).
+- CI workflow (fmt, clippy, test, docs, MSRV) and Release workflow
+  (pre-built binaries for Linux/macOS/Windows on x86_64 and aarch64).
+
+### Fixed
+
+- Cached parsed PE structure in `DnPe` so `offset()`/`get_data()` no longer
+  re-parse the binary on every call (previously called from every metadata
+  row and every CIL instruction).
+- CIL `Reader` now borrows the file slice (`Reader<'a>`) instead of cloning
+  the entire buffer per method body.
+- CIL `OPCODES` is now a `LazyLock<OpCodes>` singleton (was built ~512
+  entries per `Reader::new`).
+- The 4 `unimplemented!()` panics in metadata-table parsing (`EventPtr`,
+  `PropertyPtr`, `Unused`, `MaxTable`) now return
+  `Error::NotImplementedError`.
+- `is_ldloc()` typo: was matching `Ldarg_1`/`Ldarg_2` where the surrounding
+  list contains `Ldloc_0..3` — now correctly matches `Ldloc_1`/`Ldloc_2`.
+- Removed two reachable `unwrap()` calls in `DnPe::offset` /
+  `DnPe::get_data` that could panic on truncated PE headers.
+
+### Removed
+
+- Dead `bincode` and `clap` dependencies from the library.
+- Dead `Error::Bincode` variant.
+
+## [0.2.3] and earlier
+
+Initial pre-zero-copy releases. See git history.
