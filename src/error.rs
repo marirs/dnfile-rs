@@ -4,10 +4,8 @@ pub enum Error {
     RegexError(#[from] regex::Error),
     #[error("goblin error")]
     ParseError(#[from] goblin::error::Error),
-    #[error("unsupported  binary format")]
+    #[error("unsupported binary format: {0}")]
     UnsupportedBinaryFormat(&'static str),
-    #[error("unsupported  binary format")]
-    Bincode(#[from] Box<bincode::ErrorKind>),
     #[error("{0}")]
     IoError(#[from] std::io::Error),
     #[error("{0}")]

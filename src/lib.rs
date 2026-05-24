@@ -58,15 +58,17 @@ impl DnPe {
     }
 
     fn offset(&self, rva: u32) -> Result<usize> {
+        let pe = self.pe()?;
+        let file_alignment = pe
+            .header
+            .optional_header
+            .ok_or(Error::UnsupportedBinaryFormat("optional header absence"))?
+            .windows_fields
+            .file_alignment;
         match goblin::pe::utils::find_offset(
             rva as usize,
-            &self.pe()?.sections,
-            self.pe()?
-                .header
-                .optional_header
-                .unwrap()
-                .windows_fields
-                .file_alignment,
+            &pe.sections,
+            file_alignment,
             &goblin::pe::options::ParseOptions::default(),
         ) {
             Some(s) => Ok(s),
@@ -78,19 +80,21 @@ impl DnPe {
     where
         T: scroll::ctx::TryFromCtx<'a, goblin::container::Endian, Error = scroll::Error>,
     {
+        let pe = self.pe()?;
+        let file_alignment = pe
+            .header
+            .optional_header
+            .ok_or(Error::UnsupportedBinaryFormat("optional header absence"))?
+            .windows_fields
+            .file_alignment;
         Ok(goblin::pe::utils::get_data(
             &self.data,
-            &self.pe()?.sections,
+            &pe.sections,
             goblin::pe::data_directories::DataDirectory {
                 virtual_address: *rva,
                 size: *size as u32,
             },
-            self.pe()?
-                .header
-                .optional_header
-                .unwrap()
-                .windows_fields
-                .file_alignment,
+            file_alignment,
         )?)
     }
 

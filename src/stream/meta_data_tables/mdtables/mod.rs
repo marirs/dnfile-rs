@@ -1435,7 +1435,7 @@ impl MDTableRowTrait for EventPtr {
         _blobss_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
-        unimplemented!()
+        Err(Error::NotImplementedError)
     }
 }
 
@@ -1574,7 +1574,7 @@ impl MDTableRowTrait for PropertyPtr {
         _blobss_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
-        unimplemented!()
+        Err(Error::NotImplementedError)
     }
 }
 
@@ -2801,7 +2801,7 @@ impl MDTableRowTrait for Unused {
         _blobss_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
-        unimplemented!()
+        Err(Error::NotImplementedError)
     }
 }
 
@@ -2836,7 +2836,7 @@ impl MDTableRowTrait for MaxTable {
         _blobss_heap: &Option<&crate::stream::ClrStream>,
         _guids_heap: &Option<&crate::stream::ClrStream>,
     ) -> Result<()> {
-        unimplemented!()
+        Err(Error::NotImplementedError)
     }
 }
 
