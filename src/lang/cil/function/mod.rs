@@ -1,4 +1,4 @@
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 
 pub mod flags;
 pub mod reader;

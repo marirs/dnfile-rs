@@ -1,4 +1,4 @@
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 
 pub fn clr_coded_index_struct_size(
     tag_bits: usize,

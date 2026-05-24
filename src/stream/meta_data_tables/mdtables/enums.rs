@@ -1,4 +1,4 @@
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 
 #[derive(Debug, Clone)]
 pub enum CorTypeVisibility {

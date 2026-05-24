@@ -1,4 +1,4 @@
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 
 pub mod blob_heap;
 pub mod generic_stream;

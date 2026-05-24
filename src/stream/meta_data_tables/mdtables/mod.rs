@@ -1,5 +1,5 @@
 #![allow(clippy::too_many_arguments)]
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 use serde::ser::{Serialize, SerializeSeq};
 
 pub mod codedindex;

@@ -1,7 +1,7 @@
 use super::super::super::clr::{argument::Argument, local::Local, token::Token};
 use super::super::instruction::{Instruction, Operand};
 use super::super::{enums::*, opcode::*};
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 use byteorder::ReadBytesExt;
 
 use std::io::Seek;

@@ -1,4 +1,4 @@
-use crate::{error::Error, Result};
+use crate::{Result, error::Error};
 
 pub fn read_usize(data: &[u8]) -> Result<usize> {
     match data.len() {
