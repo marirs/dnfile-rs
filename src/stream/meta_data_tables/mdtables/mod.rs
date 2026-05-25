@@ -21,7 +21,15 @@ pub mod codedindex;
 use codedindex::CodedIndex;
 pub mod enums;
 
-pub trait MDTableTrait: std::fmt::Debug + MDTableTraitClone {
+// 0.5.0: `Send + Sync` supertraits added so `Box<dyn MDTableTrait>`
+// (and the `DnPe<'_>` graph that contains it) can cross thread
+// boundaries. Required by downstream consumers (capa-rs 0.4.2)
+// that rayon-parallelise function-level analysis. All MDTableTrait
+// impls in dnfile-rs are naturally `Send + Sync` (plain-data
+// structs of `Vec`/`String`/primitives) so this is non-breaking
+// for the in-tree impls — only downstream impls of MDTableTrait
+// on non-thread-safe types need to add the bounds.
+pub trait MDTableTrait: std::fmt::Debug + MDTableTraitClone + Send + Sync {
     fn set_data(&mut self, data: &[u8]) -> Result<()>;
     fn row_size(&self) -> usize;
     fn get_row(&self, i: usize) -> Result<&dyn MDTableRowTraitT>;
@@ -44,7 +52,8 @@ impl Serialize for dyn MDTableTrait {
     }
 }
 
-pub trait MDTableTraitClone {
+// 0.5.0: `Send + Sync` supertraits — see MDTableTrait comment.
+pub trait MDTableTraitClone: Send + Sync {
     fn clone_box(&self) -> Box<dyn MDTableTrait>;
 }
 
@@ -163,7 +172,8 @@ where
     }
 }
 
-pub trait MDTableRowTrait: std::fmt::Debug {
+// 0.5.0: `Send + Sync` supertraits — see MDTableTrait comment.
+pub trait MDTableRowTrait: std::fmt::Debug + Send + Sync {
     fn size(
         &self,
         str_offset_size: usize,
@@ -202,7 +212,8 @@ pub trait MDTableRowTrait: std::fmt::Debug {
     fn as_any(&self) -> &dyn std::any::Any;
 }
 
-pub trait MDTableRowTraitT {
+// 0.5.0: `Send + Sync` supertraits — see MDTableTrait comment.
+pub trait MDTableRowTraitT: Send + Sync {
     fn size(&self) -> usize;
     fn parse(
         &mut self,

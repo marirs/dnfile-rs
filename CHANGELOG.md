@@ -6,6 +6,35 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 with the caveat that 0.x minor versions can break.
 
+## [0.5.0] — 2026-05-26 — Thread-safety supertrait bounds (breaking)
+
+### Breaking changes
+
+- **`MDTableTrait`, `MDTableTraitClone`, `MDTableRowTrait`,
+  `MDTableRowTraitT`, and `CodedIndex` gained `Send + Sync`
+  supertrait bounds.** This makes `Box<dyn MDTableTrait>` (and the
+  whole `DnPe<'_>` reachability graph that wraps it) shareable
+  across thread boundaries — required by downstream consumers
+  (capa-rs 0.4.2 onwards) that parallelise function-level analysis
+  via rayon.
+
+  All `MDTableTrait`/`MDTableRowTrait`/etc. impls in dnfile-rs are
+  plain-data structs (`Vec`, `String`, primitives) and naturally
+  satisfy the new bounds — no internal code changes were needed
+  beyond the supertrait declaration. Downstream consumers with
+  *non-thread-safe* impls of these traits must add `Send + Sync`
+  bounds to their types (or explain why their type is in fact
+  thread-unsafe and split it into a non-shared variant).
+
+### Migration
+
+No source changes are required if your `MDTableTrait` /
+`MDTableRowTrait` / `CodedIndex` impls already store only
+thread-safe types (the common case). If you hit a compile error,
+add `unsafe impl Send for MyType {}` / `unsafe impl Sync for
+MyType {}` if you can prove thread-safety, or factor out the
+non-thread-safe bits into a separate type.
+
 ## [0.4.2] — 2026-05
 
 ### Fixed

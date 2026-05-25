@@ -22,7 +22,8 @@ pub fn clr_coded_index_struct_size(
     }
 }
 
-pub trait CodedIndex {
+// 0.5.0: `Send + Sync` supertraits — see MDTableTrait comment in mod.rs.
+pub trait CodedIndex: Send + Sync {
     fn set_row_index(&mut self, value: usize);
     fn set_table(&mut self, value: &'static str);
     fn get_table_name(&self, index: usize) -> Result<&'static str>;

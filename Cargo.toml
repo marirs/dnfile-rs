@@ -1,6 +1,6 @@
 [package]
 name = "dnfile"
-version = "0.4.2"
+version = "0.5.0"
 description = ".NET binary extractor"
 authors = ["Marirs <marirs@gmail.com>", "Andrey Mnatsakanov <andrey@3ig.kiev.ua>", "Jorge Alejandro Durán Royo<jorge.duran.royo@gmail.com>"]
 keywords = ["dotnet", "binary", "extractor", "pe"]
