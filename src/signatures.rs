@@ -4,7 +4,7 @@
 //! Two decoders here, covering the most common `#Blob` payloads
 //! encountered in malware-triage workflows:
 //!
-//! ### [`CustomAttribute`] (ECMA-335 II.23.3)
+//! ### `CustomAttribute` (ECMA-335 II.23.3)
 //!
 //! Decodes a `CustomAttribute` blob into typed `Value`s. Layout:
 //!
@@ -19,15 +19,15 @@
 //! the constructor's signature (passed in via
 //! `CustomAttribute::decode_with_types`). For callers that don't
 //! have the constructor signature, the simpler
-//! [`CustomAttribute::decode_raw_named`] decoder skips the fixed
+//! `CustomAttribute::decode_raw_named` decoder skips the fixed
 //! args entirely and walks the named-arg section (which carries
 //! self-describing element types).
 //!
-//! ### [`MarshalSpec`] (ECMA-335 II.23.4)
+//! ### `MarshalSpec` (ECMA-335 II.23.4)
 //!
 //! Decodes a `FieldMarshal.NativeType` blob — the marshalling
-//! descriptor pinned via `[MarshalAs(UnmanagedType.X)]` on a
-//! parameter or field. Covers the simple cases (single
+//! descriptor pinned via the `MarshalAs(UnmanagedType.X)` attribute
+//! on a parameter or field. Covers the simple cases (single
 //! `NATIVE_TYPE_*` byte, length-prefixed arrays/strings, custom
 //! marshaller class+cookie) which match what `DllImport`
 //! signatures use almost universally.
