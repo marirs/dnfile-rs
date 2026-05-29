@@ -4,6 +4,7 @@ pub mod blob_heap;
 pub mod generic_stream;
 pub mod guid_heap;
 pub mod meta_data_tables;
+pub mod pdb_stream;
 pub mod string_heap;
 pub mod user_string_heap;
 
@@ -15,6 +16,11 @@ pub enum Stream<'a> {
     BlobHeap(blob_heap::BlobHeap<'a>),
     GuidHeap(guid_heap::GuidHeap<'a>),
     UserStringHeap(user_string_heap::UserStringHeap<'a>),
+    /// 0.5.1: Portable PDB `#Pdb` stream header. Identifies
+    /// assemblies that ship embedded Portable PDB debug info and
+    /// surfaces the PdbId for symbol-server lookup. See
+    /// `pdb_stream::PdbStream` for the field layout.
+    PdbStream(pdb_stream::PdbStream<'a>),
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -103,6 +109,13 @@ impl<'a> crate::DnPe<'a> {
                     stream_data,
                 )?,
                 "#US" => self.new_user_string_heap(
+                    metadata_rva,
+                    stream_offset,
+                    stream_size,
+                    stream_name,
+                    stream_data,
+                )?,
+                "#Pdb" => self.new_pdb_stream(
                     metadata_rva,
                     stream_offset,
                     stream_size,

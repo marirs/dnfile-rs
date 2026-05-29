@@ -6,6 +6,65 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 with the caveat that 0.x minor versions can break.
 
+## [0.5.1] — Additions
+
+Closes four items. All additive; no breaking API changes.
+
+### Fixed
+
+- **`#US` (user-string) heap decoder now uses `String::from_utf16_lossy`
+  instead of strict `String::from_utf16`.
+  Some .NET malware deliberately stores invalid UTF-16 (unpaired
+  surrogates, terminator-byte oddities) in `#US` entries as a
+  poor-man's anti-analysis trick. Pre-0.5.1 every such entry
+  returned `Err(FromUtf16Error)` and the calling tool (capa,
+  string scanners) silently dropped the string from its feature
+  set — rules looking for those strings never fired. Now the
+  decoder replaces invalid surrogates with U+FFFD and surfaces
+  the rest of the string, matching upstream behaviour. The raw
+  bytes remain accessible via `UserStringHeap::get_ref` for
+  callers that need strict-or-fail decoding.
+
+### Added
+
+- **`#Pdb` stream parser** (`stream::pdb_stream::PdbStream`).
+  Parses the Portable PDB stream header (PdbId, EntryPoint
+  token, ReferencedTypeSystemTables bitmap, per-table row
+  counts). Surfaces `guid()` for symbol-server lookup and
+  `stamp()` for the legacy-PDB-age equivalent. The full
+  Portable PDB metadata tables (Document,
+  MethodDebugInformation, LocalScope, LocalVariable,
+  LocalConstant, ImportScope, StateMachineMethod,
+  CustomDebugInformation) are intentionally NOT decoded —
+  that's a substantial follow-up. The new `Stream::PdbStream`
+  enum variant + `"#Pdb"` dispatch in `nnew_clr_stream` make
+  the header visible end-to-end.
+
+- **`signatures::CustomAttribute` decoder** (ECMA-335 II.23.3).
+  Decodes attribute blobs from `CustomAttribute.Value` into
+  typed `Value`s: primitives (`Boolean`/`Char`/`I1..U8`/`R4`/`R8`),
+  `String` (SerString), `Type` (SerType), and `SZARRAY` of
+  primitives. Covers `[DllImport]`, `[Obfuscation]`, `[Guid]`,
+  `[AssemblyVersion]`, and the long tail of CLR attributes
+  capa rules look for. Two entry points:
+  `decode_with_types(blob, ctor_param_types)` for the typical
+  case (caller has the constructor signature from `MemberRef`/
+  `MethodDef`), `decode_raw_named(blob, fixed_blob_len)` for
+  the named-args-only case when the caller can't recover the
+  ctor types.
+
+- **`signatures::MarshalSpec` decoder** (ECMA-335 II.23.4).
+  Decodes `FieldMarshal.NativeType` blobs into typed enum:
+  `Simple(NATIVE_TYPE_*)`, `Array { elem_type, param_num,
+  num_elem, param_num_multiplier }`, `FixedSysString { size }`,
+  `FixedArray { size, elem_type }`, `CustomMarshaler { guid,
+  unmanaged_type, managed_type, cookie }`. Covers the
+  `[MarshalAs(UnmanagedType.X)]` surface used in essentially
+  every P/Invoke declaration.
+
+- New `signatures::native_type` constant module with the
+  common `NATIVE_TYPE_*` byte values.
+
 ## [0.5.0] — 2026-05-26 — Thread-safety supertrait bounds (breaking)
 
 ### Breaking changes

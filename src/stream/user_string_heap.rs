@@ -38,13 +38,34 @@ impl<'a> UserStringHeap<'a> {
         }
     }
 
+    /// Decode the #US heap entry at `index` as a Rust `String`.
+    ///
+    /// 0.5.1 (parity with upstream `malwarefrank/dnfile` PR #93):
+    /// uses `String::from_utf16_lossy` instead of the strict
+    /// `String::from_utf16`. Some .NET malware deliberately stores
+    /// invalid UTF-16 in `#US` heap entries — unpaired high/low
+    /// surrogates, terminator-byte oddities — as a poor-man's
+    /// anti-analysis trick: strict decoders bail with
+    /// `FromUtf16Error`, the calling tool drops the string from
+    /// its feature set, and rules looking for that string don't
+    /// fire. The lossy decoder replaces invalid surrogates with
+    /// U+FFFD (`�`) and yields the rest of the string verbatim,
+    /// which matches what upstream Python dnfile + capa do (with
+    /// `errors='surrogatepass'` / `errors='replace'`) so capa
+    /// rules see the same string content across both
+    /// implementations.
+    ///
+    /// If you need a strict-or-fail decode for a specific use
+    /// case, walk `get_ref(index)` yourself and call
+    /// `String::from_utf16` directly — the raw bytes are still
+    /// borrowed zero-copy.
     pub fn get_us(&self, index: usize) -> Result<String> {
         let data = self.get_ref(index)?;
         let utf16: Vec<u16> = data
             .chunks_exact(2)
             .map(|chunk| u16::from_le_bytes([chunk[0], chunk[1]]))
             .collect();
-        Ok(String::from_utf16(&utf16)?)
+        Ok(String::from_utf16_lossy(&utf16))
     }
 }
 

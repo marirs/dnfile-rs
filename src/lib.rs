@@ -11,6 +11,13 @@ use serde::{Deserialize, Serialize};
 pub mod error;
 pub mod lang;
 pub mod resource;
+/// 0.5.1: typed decoders for `#Blob`-heap signature payloads.
+/// Currently covers `CustomAttribute` (ECMA-335 II.23.3) and
+/// `MarshalSpec` (II.23.4). The full ECMA-335 II.23.2
+/// signature-blob grammar (MethodDef/Ref/FieldSig/PropertySig/
+/// LocalVarSig/TypeSpec/MethodSpec + recursive TypeSig) is
+/// intentionally NOT here yet — see the module docs.
+pub mod signatures;
 pub mod stream;
 pub mod utils;
 
