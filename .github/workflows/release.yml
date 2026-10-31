@@ -19,9 +19,9 @@ env:
 jobs:
   verify:
     name: verify build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all -- --check
@@ -37,17 +37,17 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             artifact: dndump
             archive_ext: tar.gz
           - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: ubuntu-24.04
             artifact: dndump
             archive_ext: tar.gz
             cross: true
           # macos-latest is Apple Silicon; rustc cross-compiles to x86_64
           # natively (no `cross` needed) because Apple's toolchain ships both
-          # Darwin targets. GitHub has deprecated the Intel macos-13 runner.
+          # Darwin targets. GitHub has deprecated the Intel macos-15-intel runner.
           - target: x86_64-apple-darwin
             os: macos-latest
             artifact: dndump
@@ -68,8 +68,7 @@ jobs:
             artifact: dndump.exe
             archive_ext: zip
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v7
       - name: Install Rust (${{ matrix.target }})
         uses: dtolnay/rust-toolchain@master
         with:
@@ -126,7 +125,7 @@ jobs:
           "$hash  $name.zip" | Out-File "$name.zip.sha256" -Encoding ASCII
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dndump-${{ matrix.target }}
           path: |
@@ -135,16 +134,14 @@ jobs:
             dndump-*.zip
             dndump-*.zip.sha256
           if-no-files-found: error
-
   github-release:
     name: create GitHub release
     needs: build-cli
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-
       - name: Determine tag
         id: tag
         run: |
@@ -182,10 +179,9 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Download all build artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
-
       - name: Flatten artifacts
         run: |
           mkdir -p release
@@ -193,7 +189,7 @@ jobs:
           ls -la release
 
       - name: Create release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
           name: ${{ steps.tag.outputs.tag }}

@@ -135,7 +135,7 @@ impl<'a> crate::DnPe<'a> {
 }
 
 #[repr(C)]
-#[derive(serde::Deserialize, Debug, scroll::Pread)]
+#[derive(serde::Deserialize, Debug)]
 pub struct MDTablesStruct {
     reserved_1: u32,
     major_version: u8,
@@ -145,3 +145,14 @@ pub struct MDTablesStruct {
     mask_valid: u64,
     mask_sorted: u64,
 }
+
+impl_header_pread!(
+    MDTablesStruct,
+    reserved_1,
+    major_version,
+    minor_version,
+    heap_offset_sizes,
+    reserved_2,
+    mask_valid,
+    mask_sorted
+);

@@ -8,6 +8,25 @@
 
 use serde::{Deserialize, Serialize};
 
+// Keep header readers equivalent to scroll::Pread without the derive's
+// redundant field initializers, which current Clippy rejects.
+macro_rules! impl_header_pread {
+    ($name:ty, $($field:ident),+ $(,)?) => {
+        impl<'a> scroll::ctx::TryFromCtx<'a, scroll::Endian> for $name {
+            type Error = scroll::Error;
+
+            fn try_from_ctx(
+                bytes: &'a [u8],
+                endian: scroll::Endian,
+            ) -> std::result::Result<(Self, usize), Self::Error> {
+                let mut offset = 0;
+                $(let $field = scroll::Pread::gread_with(bytes, &mut offset, endian)?;)+
+                Ok((Self { $($field),+ }, offset))
+            }
+        }
+    };
+}
+
 pub mod error;
 pub mod lang;
 pub mod resource;
@@ -351,7 +370,7 @@ impl<'a> DnPe<'a> {
 }
 
 #[repr(C)]
-#[derive(Deserialize, Debug, scroll::Pread)]
+#[derive(Deserialize, Debug)]
 pub struct ClrStruct {
     cb: u32,
     majorr_runtime_version: u16,
@@ -373,6 +392,29 @@ pub struct ClrStruct {
     managed_native_header_rva: u32,
     managed_native_header_size: u32,
 }
+
+impl_header_pread!(
+    ClrStruct,
+    cb,
+    majorr_runtime_version,
+    minor_runtime_version,
+    meta_data_rva,
+    meta_data_size,
+    flags,
+    entry_point_token_or_rva,
+    resources_rva,
+    resources_size,
+    strong_name_signature_rva,
+    strong_name_signature_size,
+    code_manager_table_rva,
+    code_manager_table_size,
+    v_table_fixups_rva,
+    v_table_fixups_size,
+    export_address_table_jumps_rva,
+    export_address_table_jumps_size,
+    managed_native_header_rva,
+    managed_native_header_size
+);
 
 #[derive(Debug, Serialize, PartialOrd, Ord, PartialEq, Eq)]
 pub enum ClrHeaderFlags {
@@ -475,7 +517,7 @@ impl<'a> ClrData<'a> {
 }
 
 #[repr(C)]
-#[derive(Deserialize, Debug, Clone, scroll::Pread)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct MetaDataStruct {
     signature: u32,
     major_version: u16,
@@ -483,6 +525,15 @@ pub struct MetaDataStruct {
     reserved: u32,
     version_length: u32,
 }
+
+impl_header_pread!(
+    MetaDataStruct,
+    signature,
+    major_version,
+    minor_version,
+    reserved,
+    version_length
+);
 
 #[derive(Debug, Serialize)]
 pub struct MetaData<'a> {
@@ -573,5 +624,49 @@ mod tests {
     fn clr_header_flags_zero_value_is_empty() {
         let flags = ClrHeaderFlags::new(0);
         assert!(flags.is_empty());
+    }
+}
+
+#[cfg(test)]
+mod header_reader_tests {
+    use scroll::Pread;
+
+    #[derive(Debug, PartialEq)]
+    struct Header {
+        first: u16,
+        second: u32,
+    }
+    impl_header_pread!(Header, first, second);
+
+    #[test]
+    fn header_reader_preserves_endianness_and_consumed_size() {
+        for endian in [scroll::LE, scroll::BE] {
+            let bytes = if endian == scroll::LE {
+                [0x34, 0x12, 0x78, 0x56, 0x34, 0x12]
+            } else {
+                [0x12, 0x34, 0x12, 0x34, 0x56, 0x78]
+            };
+            let mut offset = 0;
+            let header: Header = bytes.gread_with(&mut offset, endian).unwrap();
+            assert_eq!(
+                header,
+                Header {
+                    first: 0x1234,
+                    second: 0x12345678
+                }
+            );
+            assert_eq!(offset, bytes.len());
+        }
+    }
+
+    #[test]
+    fn header_reader_rejects_truncated_fields() {
+        for length in 0..6 {
+            assert!(
+                [0u8; 6][..length]
+                    .pread_with::<Header>(0, scroll::LE)
+                    .is_err()
+            );
+        }
     }
 }
